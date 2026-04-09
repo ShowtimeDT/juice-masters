@@ -71,15 +71,13 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
     }
   }
 
-  // Extract birdies from per-round statistics
+  // Count birdies from hole-by-hole scores (scoreType.displayValue === '-1')
   let birdies = 0;
   for (const roundData of linescores) {
-    if (!roundData?.statistics?.categories) continue;
-    for (const cat of roundData.statistics.categories) {
-      const stats = cat.stats || [];
-      // Birdies is typically the first stat in the scoring category
-      if (stats.length > 0 && stats[0].value !== undefined) {
-        birdies += parseInt(stats[0].value || "0", 10);
+    const holes = roundData?.linescores || [];
+    for (const hole of holes) {
+      if (hole?.scoreType?.displayValue === "-1") {
+        birdies++;
       }
     }
   }
