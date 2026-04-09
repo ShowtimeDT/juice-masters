@@ -38,34 +38,34 @@ export default function TournamentHeader({
       />
 
       {/* Content */}
-      <div className="relative max-w-6xl mx-auto px-4 pt-6 pb-12 sm:pt-8 sm:pb-14">
-        <div className="flex items-center justify-center gap-5 sm:gap-8">
-          {/* Logo */}
-          <div className="hidden sm:block shrink-0">
+      <div className="relative max-w-6xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8">
+          {/* Logo — above title on mobile, left of title on desktop */}
+          <div className="shrink-0">
             <Image
               src="/logo-v3.png"
               alt="Juice Masters Logo"
               width={130}
               height={150}
-              className="drop-shadow-lg"
+              className="drop-shadow-lg w-[70px] h-[80px] sm:w-[130px] sm:h-[150px]"
               priority
             />
           </div>
 
           {/* Title block */}
           <div className="text-center">
-            <h1 className="text-3xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
+            <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
               Juice Masters
             </h1>
-            <p className="text-[#8a9e82] text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-[0.35em] uppercase font-medium">
+            <p className="hidden sm:block text-[#8a9e82] text-xs mt-2 tracking-[0.35em] uppercase font-medium">
               Pick &apos;Em League Standings
             </p>
             <button
               onClick={onRefresh}
-              className="inline-flex items-center gap-2 mt-2 sm:mt-3 text-[#7a8e72] text-[9px] sm:text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[#7a8e72] text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
             >
               <span>{formattedTime || roundStatus}</span>
-              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
