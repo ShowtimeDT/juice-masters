@@ -15,7 +15,7 @@ export default function GolferRow({ golfer }: GolferRowProps) {
 
   return (
     <div
-      className={`grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] items-center py-2 px-3 text-sm border-b border-white/5 last:border-0 ${opacity}`}
+      className={`grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_1rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_1.5rem_repeat(4,3.5rem)_3.5rem] items-center py-2 px-3 text-sm border-b border-white/5 last:border-0 ${opacity}`}
     >
       {/* Tier */}
       <span className="text-gray-500 text-xs font-medium">T{golfer.tier}</span>
@@ -39,6 +39,9 @@ export default function GolferRow({ golfer }: GolferRowProps) {
           ? `${golfer.scoreDisplay} (+10)`
           : golfer.scoreDisplay}
       </span>
+
+      {/* Spacer between score and rounds */}
+      <span></span>
 
       {/* R1 - R4 scores (always show all 4) */}
       {[0, 1, 2, 3].map((i) => {

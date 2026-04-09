@@ -154,10 +154,11 @@ export default function EntryRow({ standing }: EntryRowProps) {
         <div className="bg-[#181a1c] border-t border-[#3a3e3a] overflow-x-auto">
           <div className="min-w-[28rem]">
             {/* Column headers */}
-            <div className="grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
+            <div className="grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_1rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_1.5rem_repeat(4,3.5rem)_3.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
               <span></span>
               <span>Golfer</span>
               <span className="text-right">Score</span>
+              <span></span>
               <span className="text-center">R1</span>
               <span className="text-center">R2</span>
               <span className="text-center">R3</span>
