@@ -1,0 +1,77 @@
+"use client";
+
+import Image from "next/image";
+
+interface TournamentHeaderProps {
+  name: string;
+  roundStatus: string;
+  lastUpdated: Date | null;
+  onRefresh: () => void;
+}
+
+export default function TournamentHeader({
+  name,
+  roundStatus,
+  lastUpdated,
+  onRefresh,
+}: TournamentHeaderProps) {
+  const formattedTime = lastUpdated
+    ? `UPDATED: ${lastUpdated
+        .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        .toUpperCase()}, ${lastUpdated.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }).toUpperCase()}`
+    : "";
+
+  return (
+    <header className="relative overflow-hidden">
+      {/* Green gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#3a5c3c] via-[#2e4e30] to-[#1e3a24]" />
+
+      {/* Hedge/grass texture overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0zm2 2h1v1H2zm2 2h1v1H4z' fill='%23ffffff' fill-opacity='1'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative max-w-6xl mx-auto px-4 pt-6 pb-12 sm:pt-8 sm:pb-14">
+        <div className="flex items-center justify-center gap-5 sm:gap-8">
+          {/* Logo */}
+          <div className="hidden sm:block shrink-0">
+            <Image
+              src="/logo-v3.png"
+              alt="Juice Masters Logo"
+              width={130}
+              height={150}
+              className="drop-shadow-lg"
+              priority
+            />
+          </div>
+
+          {/* Title block */}
+          <div className="text-center">
+            <h1 className="text-3xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
+              Juice Masters
+            </h1>
+            <p className="text-[#8a9e82] text-[10px] sm:text-xs mt-1.5 sm:mt-2 tracking-[0.35em] uppercase font-medium">
+              Pick &apos;Em League Standings
+            </p>
+            <button
+              onClick={onRefresh}
+              className="inline-flex items-center gap-2 mt-2 sm:mt-3 text-[#7a8e72] text-[9px] sm:text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+            >
+              <span>{formattedTime || roundStatus}</span>
+              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

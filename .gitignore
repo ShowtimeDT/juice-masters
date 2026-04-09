@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Source images (not needed for deployment)
+Gemini_Generated_Image_*.png
+Screenshot *.png
+public/grass-sample.png
+public/grass-tile.png
+public/logo-transparent.png
+public/logo-v2.png
+public/logo.png
+
