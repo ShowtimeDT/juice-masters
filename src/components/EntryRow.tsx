@@ -62,7 +62,7 @@ export default function EntryRow({ standing }: EntryRowProps) {
         </div>
 
         {/* Name */}
-        <div className="shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex items-center">
+        <div className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex items-center">
           <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
             {entry.name}
           </h3>
@@ -151,29 +151,31 @@ export default function EntryRow({ standing }: EntryRowProps) {
 
       {/* Expanded golfer details */}
       {expanded && (
-        <div className="bg-[#181a1c] border-t border-[#3a3e3a]">
-          {/* Column headers */}
-          <div className="grid grid-cols-[2rem_1fr_3.5rem_repeat(4,2.5rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
-            <span></span>
-            <span>Golfer</span>
-            <span className="text-right">Score</span>
-            <span className="text-center">R1</span>
-            <span className="text-center">R2</span>
-            <span className="text-center">R3</span>
-            <span className="text-center">R4</span>
-            <span className="text-center">Thru</span>
-          </div>
+        <div className="bg-[#181a1c] border-t border-[#3a3e3a] overflow-x-auto">
+          <div className="min-w-[28rem]">
+            {/* Column headers */}
+            <div className="grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
+              <span></span>
+              <span>Golfer</span>
+              <span className="text-right">Score</span>
+              <span className="text-center">R1</span>
+              <span className="text-center">R2</span>
+              <span className="text-center">R3</span>
+              <span className="text-center">R4</span>
+              <span className="text-center">Thru</span>
+            </div>
 
-          {/* Golfer rows - sorted: counting first, then non-counting */}
-          {[...golferScores]
-            .sort((a, b) => {
-              if (a.isCounting && !b.isCounting) return -1;
-              if (!a.isCounting && b.isCounting) return 1;
-              return a.effectiveScore - b.effectiveScore;
-            })
-            .map((golfer) => (
-              <GolferRow key={`${golfer.name}-${golfer.tier}`} golfer={golfer} />
-            ))}
+            {/* Golfer rows - sorted: counting first, then non-counting */}
+            {[...golferScores]
+              .sort((a, b) => {
+                if (a.isCounting && !b.isCounting) return -1;
+                if (!a.isCounting && b.isCounting) return 1;
+                return a.effectiveScore - b.effectiveScore;
+              })
+              .map((golfer) => (
+                <GolferRow key={`${golfer.name}-${golfer.tier}`} golfer={golfer} />
+              ))}
+          </div>
         </div>
       )}
     </div>

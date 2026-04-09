@@ -15,14 +15,17 @@ export default function GolferRow({ golfer }: GolferRowProps) {
 
   return (
     <div
-      className={`grid grid-cols-[2rem_1fr_3.5rem_repeat(4,2.5rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] items-center py-2 px-3 text-sm border-b border-white/5 last:border-0 ${opacity}`}
+      className={`grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_repeat(4,3.5rem)_3.5rem] items-center py-2 px-3 text-sm border-b border-white/5 last:border-0 ${opacity}`}
     >
       {/* Tier */}
       <span className="text-gray-500 text-xs font-medium">T{golfer.tier}</span>
 
       {/* Name + cut badge */}
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-gray-200 truncate text-xs sm:text-sm">{golfer.name}</span>
+        <span className="text-gray-200 text-xs sm:text-sm whitespace-nowrap">
+          <span className="sm:hidden">{golfer.name.split(" ")[0][0]}. {golfer.name.split(" ").slice(1).join(" ")}</span>
+          <span className="hidden sm:inline">{golfer.name}</span>
+        </span>
         {golfer.missedCut && (
           <span className="text-[10px] font-bold bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded shrink-0">
             CUT
