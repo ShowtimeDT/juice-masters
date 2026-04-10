@@ -139,12 +139,16 @@ export default function ManageLeaguePage() {
       });
     }
 
-    // Change status to open
-    await fetch(`/api/draft/${draftId}/status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-password": "commissioner" },
-      body: JSON.stringify({ status: "open" }),
-    });
+    // Only change status to open if currently pending (starting for the first time)
+    // If already open, just save the settings changes
+    const currentDraft = drafts.find((d) => d.id === draftId);
+    if (currentDraft?.status !== "open") {
+      await fetch(`/api/draft/${draftId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-password": "commissioner" },
+        body: JSON.stringify({ status: "open" }),
+      });
+    }
 
     setEditingDraftId(null);
     fetchData();
@@ -258,7 +262,7 @@ export default function ManageLeaguePage() {
                   onClick={() => startDraft(editingDraftId)}
                   className="px-6 py-2.5 bg-green-600 text-white font-semibold text-sm rounded-lg hover:bg-green-500 transition-colors cursor-pointer mt-5"
                 >
-                  Start Draft
+                  {drafts.find((d) => d.id === editingDraftId)?.status === "open" ? "Save Changes" : "Start Draft"}
                 </button>
                 <button
                   onClick={() => setEditingDraftId(null)}
@@ -319,12 +323,26 @@ export default function ManageLeaguePage() {
                       </button>
                     )}
                     {draft?.status === "open" && (
-                      <button
-                        onClick={() => changeStatus(draft.id, "locked")}
-                        className="px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-500 transition-colors cursor-pointer"
-                      >
-                        Lock Draft
-                      </button>
+                      <>
+                        <button
+                          onClick={() => reviewDraft(draft.id)}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111314] border border-[#3a3e3a] text-gray-300 hover:text-white hover:border-[#C8A951] transition-colors cursor-pointer"
+                        >
+                          Edit Tiers / Settings
+                        </button>
+                        <button
+                          onClick={() => { changeStatus(draft.id, "pending"); }}
+                          className="px-3 py-1.5 text-xs text-yellow-400 hover:text-white cursor-pointer"
+                        >
+                          Pause Draft
+                        </button>
+                        <button
+                          onClick={() => changeStatus(draft.id, "locked")}
+                          className="px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-500 transition-colors cursor-pointer"
+                        >
+                          Lock Draft
+                        </button>
+                      </>
                     )}
                     {draft?.status === "locked" && (
                       <button
