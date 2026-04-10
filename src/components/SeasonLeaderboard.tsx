@@ -23,9 +23,13 @@ function rankSuffix(rank: number): string {
   return "th";
 }
 
-export default function SeasonLeaderboard() {
+interface SeasonLeaderboardProps {
+  leagueId?: string;
+}
+
+export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) {
   const theme = useTheme();
-  const { standings, isLoading, lastUpdated, error, refresh } = useSeasonData();
+  const { standings, isLoading, lastUpdated, error, refresh } = useSeasonData(leagueId);
 
   if (isLoading && standings.length === 0) {
     return (
@@ -64,8 +68,15 @@ export default function SeasonLeaderboard() {
       )}
 
       <main className="max-w-5xl mx-auto px-4 py-8">
+        {standings.length === 0 && !isLoading && (
+          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-8 text-center">
+            <p className="text-gray-400 text-sm">No tournament results yet.</p>
+            <p className="text-gray-500 text-xs mt-1">Season standings will appear once a tournament draft is locked and the tournament begins.</p>
+          </div>
+        )}
+
         {/* Season standings table */}
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+        {standings.length > 0 && <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
           {/* Column headers */}
           <div className="overflow-x-auto">
             <div className="min-w-[30rem]">
@@ -119,7 +130,7 @@ export default function SeasonLeaderboard() {
               ))}
             </div>
           </div>
-        </div>
+        </div>}
 
         <footer className="text-center text-gray-600 text-xs py-6">
           Auto-refreshes every 2 minutes
