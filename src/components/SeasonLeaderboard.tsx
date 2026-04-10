@@ -2,7 +2,10 @@
 
 import { useSeasonData } from "@/hooks/useSeasonData";
 import { useTheme } from "@/lib/ThemeContext";
+import { TOURNAMENTS } from "@/lib/tournaments";
 import TournamentHeader from "./TournamentHeader";
+
+const TOURNAMENT_COLUMNS = TOURNAMENTS.filter((t) => t.id !== "season");
 
 function formatScore(score: number): string {
   if (score === 0) return "E";
@@ -68,23 +71,16 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
       )}
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {standings.length === 0 && !isLoading && (
-          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-8 text-center">
-            <p className="text-gray-400 text-sm">No tournament results yet.</p>
-            <p className="text-gray-500 text-xs mt-1">Season standings will appear once a tournament draft is locked and the tournament begins.</p>
-          </div>
-        )}
-
         {/* Season standings table */}
-        {standings.length > 0 && <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
           {/* Column headers */}
           <div className="overflow-x-auto">
             <div className="min-w-[30rem]">
               <div className="grid grid-cols-[3rem_1fr_repeat(4,4.5rem)_5rem] px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold border-b border-[#3a3e3a]">
                 <span className="text-center">Rank</span>
                 <span>Player</span>
-                {standings[0]?.tournamentResults.map((tr) => (
-                  <span key={tr.tournamentId} className="text-center">{tr.shortName}</span>
+                {TOURNAMENT_COLUMNS.map((t) => (
+                  <span key={t.id} className="text-center">{t.shortName}</span>
                 ))}
                 <span className="text-right">Total</span>
               </div>
@@ -122,15 +118,15 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
                   {/* Total */}
                   <span
                     className="text-right font-mono font-bold text-lg"
-                    style={{ color: scoreColor(standing.totalScore) }}
+                    style={{ color: standing.completedTournaments > 0 ? scoreColor(standing.totalScore) : "#5a5e5a" }}
                   >
-                    {formatScore(standing.totalScore)}
+                    {standing.completedTournaments > 0 ? formatScore(standing.totalScore) : "—"}
                   </span>
                 </div>
               ))}
             </div>
           </div>
-        </div>}
+        </div>
 
         <footer className="text-center text-gray-600 text-xs py-6">
           Auto-refreshes every 2 minutes
