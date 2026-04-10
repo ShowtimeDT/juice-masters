@@ -47,6 +47,7 @@ export default function TournamentSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showSavedToast, setShowSavedToast] = useState(false);
   const [currentGolfers, setCurrentGolfers] = useState<{ name: string; espn_id: string; tier_number: number }[]>([]);
 
   const fetchData = useCallback(async () => {
@@ -121,6 +122,8 @@ export default function TournamentSettingsPage() {
     }
 
     setSaving(false);
+    setShowSavedToast(true);
+    setTimeout(() => setShowSavedToast(false), 3000);
   };
 
   // Keep a no-op for TierEditor's onSave (we save everything together)
@@ -176,6 +179,16 @@ export default function TournamentSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
+      {/* Save toast */}
+      {showSavedToast && (
+        <div className="fixed top-4 right-4 z-50 bg-green-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          Changes saved
+        </div>
+      )}
+
       <header className="bg-[#111314] border-b border-[#2a2e2a] px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
