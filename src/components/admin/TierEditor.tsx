@@ -28,7 +28,8 @@ export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfers
           ? { ...g, tier_number: toTier }
           : g
       );
-      onGolfersChange?.(updated);
+      // Defer parent state update to avoid updating during render
+      setTimeout(() => onGolfersChange?.(updated), 0);
       return updated;
     });
   };
