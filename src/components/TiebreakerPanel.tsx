@@ -16,49 +16,56 @@ export default function TiebreakerPanel({
   });
 
   return (
-    <div className="bg-[#2d2d2d] rounded-lg border border-white/5 overflow-hidden">
-      <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-        <h2 className="text-white font-semibold text-sm sm:text-base">
+    <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+      {/* Header */}
+      <div className="px-3 sm:px-4 py-3 border-b border-[#3a3e3a] flex items-center justify-between">
+        <h2 className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
           Tiebreaker: Total Birdies
         </h2>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-xs">Actual:</span>
-          <span className="text-[#4ade80] font-mono font-bold text-lg">
+          <span className="text-gray-400 text-xs uppercase tracking-wider">Actual:</span>
+          <span className="text-white font-mono font-bold text-xl">
             {actualBirdies}
           </span>
         </div>
       </div>
-      <div className="divide-y divide-white/5">
+
+      {/* Column headers */}
+      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold border-b border-[#3a3e3a]">
+        <span>Player</span>
+        <span className="text-right">Guess</span>
+        <span className="text-right">Differential</span>
+      </div>
+
+      {/* Rows */}
+      <div>
         {sorted.map((standing, i) => {
           const diff = standing.entry.tiebreakerGuess - actualBirdies;
-          const absDiff = Math.abs(diff);
           const isClosest = i === 0;
 
           return (
             <div
               key={standing.entry.id}
-              className={`flex items-center justify-between px-4 py-2.5 text-sm ${
+              className={`grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] items-center px-3 sm:px-4 py-2.5 text-sm border-b border-white/5 last:border-0 ${
                 isClosest ? "bg-[#006747]/15" : ""
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`${isClosest ? "text-white font-medium" : "text-gray-400"} truncate`}>
+                  {standing.entry.name}
+                </span>
                 {isClosest && (
-                  <span className="text-[10px] font-bold bg-[#006747]/30 text-[#4ade80] px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold bg-[#006747]/30 text-[#4ade80] px-1.5 py-0.5 rounded shrink-0">
                     CLOSEST
                   </span>
                 )}
-                <span className={`${isClosest ? "text-white font-medium" : "text-gray-400"}`}>
-                  {standing.entry.name}
-                </span>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-gray-300 font-mono">
-                  {standing.entry.tiebreakerGuess}
-                </span>
-                <span className={`font-mono text-xs w-16 text-right ${absDiff === 0 ? "text-[#4ade80]" : "text-gray-500"}`}>
-                  {diff === 0 ? "exact" : diff > 0 ? `+${diff}` : diff.toString()}
-                </span>
-              </div>
+              <span className="text-gray-300 font-mono text-right">
+                {standing.entry.tiebreakerGuess}
+              </span>
+              <span className="text-gray-500 font-mono text-right">
+                {diff === 0 ? "exact" : diff > 0 ? `+${diff}` : diff.toString()}
+              </span>
             </div>
           );
         })}
