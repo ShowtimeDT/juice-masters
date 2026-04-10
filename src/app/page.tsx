@@ -8,6 +8,7 @@ import TournamentTabs from "@/components/TournamentTabs";
 import Leaderboard from "@/components/Leaderboard";
 import TournamentPlaceholder from "@/components/TournamentPlaceholder";
 import TournamentHeader from "@/components/TournamentHeader";
+import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 
 function AppContent() {
   const searchParams = useSearchParams();
@@ -24,15 +25,7 @@ function AppContent() {
       <ThemeProvider value={config.theme}>
         <div className="min-h-screen bg-[#1a1a1a]">
           <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
-          <TournamentHeader
-            tournamentName="Juice Tour"
-            roundStatus="2026 Season"
-            lastUpdated={null}
-            onRefresh={() => {}}
-          />
-          <div className="max-w-5xl mx-auto px-4 py-12 text-center">
-            <p className="text-gray-400">Season leaderboard will be available after the first major is complete.</p>
-          </div>
+          <SeasonLeaderboard />
         </div>
       </ThemeProvider>
     );
