@@ -6,8 +6,7 @@ import { getTournament, TournamentId } from "@/lib/tournaments";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import TournamentTabs from "@/components/TournamentTabs";
 import Leaderboard from "@/components/Leaderboard";
-import TournamentPlaceholder from "@/components/TournamentPlaceholder";
-import TournamentHeader from "@/components/TournamentHeader";
+import DraftAwareTournament from "@/components/DraftAwareTournament";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 
 function AppContent() {
@@ -36,13 +35,7 @@ function AppContent() {
       <ThemeProvider value={config.theme}>
         <div className="min-h-screen bg-[#1a1a1a]">
           <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
-          <TournamentHeader
-            tournamentName={config.name}
-            roundStatus={config.dates}
-            lastUpdated={null}
-            onRefresh={() => {}}
-          />
-          <TournamentPlaceholder config={config} />
+          <DraftAwareTournament config={config} />
         </div>
       </ThemeProvider>
     );

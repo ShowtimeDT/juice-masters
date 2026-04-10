@@ -3,6 +3,7 @@
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { getEntriesForTournament } from "@/lib/entries";
 import { calculateStandings } from "@/lib/scoring";
+import { Entry } from "@/lib/types";
 import { TournamentConfig } from "@/lib/tournaments";
 import TournamentHeader from "./TournamentHeader";
 import EntryRow from "./EntryRow";
@@ -10,11 +11,12 @@ import TiebreakerPanel from "./TiebreakerPanel";
 
 interface LeaderboardProps {
   config: TournamentConfig;
+  entries?: Entry[];
 }
 
-export default function Leaderboard({ config }: LeaderboardProps) {
+export default function Leaderboard({ config, entries: entriesProp }: LeaderboardProps) {
   const { data, lastUpdated, isLoading, error, refresh } = useAutoRefresh(config.espnDatesParam);
-  const entries = getEntriesForTournament(config.id);
+  const entries = entriesProp || getEntriesForTournament(config.id);
 
   if (isLoading && !data) {
     return (
