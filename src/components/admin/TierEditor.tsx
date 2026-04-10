@@ -12,21 +12,25 @@ interface TierEditorProps {
   initialGolfers: Golfer[];
   numTiers: number;
   onSave: (golfers: Golfer[]) => Promise<void>;
+  onGolfersChange?: (golfers: Golfer[]) => void;
+  hideTopSaveButton?: boolean;
 }
 
-export default function TierEditor({ initialGolfers, numTiers, onSave }: TierEditorProps) {
+export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfersChange, hideTopSaveButton }: TierEditorProps) {
   const [golfers, setGolfers] = useState<Golfer[]>(initialGolfers);
   const [saving, setSaving] = useState(false);
 
   const moveGolfer = (golferName: string, fromTier: number, toTier: number) => {
     if (toTier < 1 || toTier > numTiers) return;
-    setGolfers((prev) =>
-      prev.map((g) =>
+    setGolfers((prev) => {
+      const updated = prev.map((g) =>
         g.name === golferName && g.tier_number === fromTier
           ? { ...g, tier_number: toTier }
           : g
-      )
-    );
+      );
+      onGolfersChange?.(updated);
+      return updated;
+    });
   };
 
   const handleSave = async () => {
@@ -39,13 +43,15 @@ export default function TierEditor({ initialGolfers, numTiers, onSave }: TierEdi
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-white font-bold text-sm uppercase tracking-wide">Review Tiers</h3>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-2 bg-[#C8A951] text-black font-semibold text-xs rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Tier Changes"}
-        </button>
+        {!hideTopSaveButton && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 bg-[#C8A951] text-black font-semibold text-xs rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Tier Changes"}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

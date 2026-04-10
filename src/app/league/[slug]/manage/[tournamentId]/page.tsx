@@ -47,6 +47,7 @@ export default function TournamentSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [currentGolfers, setCurrentGolfers] = useState<{ name: string; espn_id: string; tier_number: number }[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -71,9 +72,11 @@ export default function TournamentSettingsPage() {
           // Fetch full draft data for golfers
           const draftRes = await fetch(`/api/draft/${d.id}`);
           const draftData = await draftRes.json();
-          setGolfers(draftData.golfers || []);
+          const golfersData = draftData.golfers || [];
+          setGolfers(golfersData);
+          setCurrentGolfers(golfersData.map((g: DraftGolfer) => ({ name: g.name, espn_id: g.espn_id, tier_number: g.tier_number })));
 
-          // Set close time
+          // Set close time — default to 15 min before first tee
           if (d.close_time) {
             setSelectedCloseTime(d.close_time);
           } else if (config?.firstTeeTime) {
@@ -93,31 +96,20 @@ export default function TournamentSettingsPage() {
     else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
   }, [authStatus, fetchData, router, slug]);
 
-  const saveTiers = async (updatedGolfers: { name: string; espn_id: string; tier_number: number }[]) => {
-    if (!draft) return;
-    await fetch(`/api/draft/${draft.id}/golfers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        golfers: updatedGolfers.map((g) => ({ tier_number: g.tier_number, name: g.name, espn_id: g.espn_id })),
-      }),
-    });
-  };
-
-  const saveCloseTime = async () => {
-    if (!draft || !selectedCloseTime) return;
-    setSaving(true);
-    await fetch(`/api/draft/${draft.id}/close-time`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ close_time: selectedCloseTime }),
-    });
-    setSaving(false);
-  };
-
-  const startDraft = async () => {
+  const saveAll = async () => {
     if (!draft) return;
     setSaving(true);
+
+    // Save tiers
+    if (currentGolfers.length > 0) {
+      await fetch(`/api/draft/${draft.id}/golfers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          golfers: currentGolfers.map((g) => ({ tier_number: g.tier_number, name: g.name, espn_id: g.espn_id })),
+        }),
+      });
+    }
 
     // Save close time
     if (selectedCloseTime) {
@@ -127,6 +119,18 @@ export default function TournamentSettingsPage() {
         body: JSON.stringify({ close_time: selectedCloseTime }),
       });
     }
+
+    setSaving(false);
+  };
+
+  // Keep a no-op for TierEditor's onSave (we save everything together)
+  const saveTiers = async () => {};
+
+  const startDraft = async () => {
+    if (!draft) return;
+    setSaving(true);
+
+    await saveAll();
 
     // Set status to open (only if not already open)
     if (draft.status !== "open") {
@@ -196,13 +200,6 @@ export default function TournamentSettingsPage() {
             {draft?.status === "open" && (
               <>
                 <button
-                  onClick={() => { saveCloseTime(); }}
-                  disabled={saving}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#C8A951] text-black hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
-                <button
                   onClick={() => changeStatus("pending")}
                   className="px-3 py-1.5 text-xs text-yellow-400 hover:text-white cursor-pointer"
                 >
@@ -261,9 +258,20 @@ export default function TournamentSettingsPage() {
                   initialGolfers={golfers.map((g) => ({ name: g.name, espn_id: g.espn_id, tier_number: g.tier_number }))}
                   numTiers={8}
                   onSave={saveTiers}
+                  onGolfersChange={setCurrentGolfers}
+                  hideTopSaveButton
                 />
               </div>
             )}
+
+            {/* Save button at bottom */}
+            <button
+              onClick={saveAll}
+              disabled={saving}
+              className="w-full py-4 bg-[#C8A951] text-black font-semibold text-sm rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save All Changes"}
+            </button>
           </>
         )}
       </main>
