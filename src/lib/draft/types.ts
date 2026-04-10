@@ -25,6 +25,7 @@ export interface DraftPick {
   id: number;
   draft_id: string;
   owner: string;
+  user_id?: string;
   tier_number: number;
   golfer_name: string;
   tiebreaker_guess: number | null;
@@ -35,6 +36,7 @@ export interface DraftMember {
   id: number;
   draft_id: string;
   name: string;
+  user_id?: string;
 }
 
 export interface PickCount {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { TournamentConfig } from "@/lib/tournaments";
 import { DraftData } from "@/lib/draft/types";
 import { Entry } from "@/lib/types";
@@ -8,23 +9,24 @@ import TournamentHeader from "./TournamentHeader";
 import TournamentPlaceholder from "./TournamentPlaceholder";
 import DraftPickView from "./draft/DraftPickView";
 import Leaderboard from "./Leaderboard";
+import AuthModal from "./auth/AuthModal";
 
 interface DraftAwareTournamentProps {
   config: TournamentConfig;
+  leagueId?: string;
+  isMember?: boolean;
 }
 
-export default function DraftAwareTournament({ config }: DraftAwareTournamentProps) {
+export default function DraftAwareTournament({ config, leagueId, isMember }: DraftAwareTournamentProps) {
+  const { data: session } = useSession();
   const [draftData, setDraftData] = useState<DraftData | null>(null);
   const [draftEntries, setDraftEntries] = useState<Entry[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedOwner, setSelectedOwner] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const fetchDraft = useCallback(async (owner?: string) => {
+  const fetchDraft = useCallback(async () => {
     try {
-      const ownerParam = owner || selectedOwner;
-      const url = ownerParam
-        ? `/api/draft/tournament/${config.id}?owner=${encodeURIComponent(ownerParam)}`
-        : `/api/draft/tournament/${config.id}`;
+      const url = `/api/draft/tournament/${config.id}`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -51,16 +53,11 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
       setDraftEntries(null);
     }
     setLoading(false);
-  }, [config.id, selectedOwner]);
+  }, [config.id]);
 
   useEffect(() => {
     fetchDraft();
   }, [fetchDraft]);
-
-  const handleOwnerChange = (owner: string) => {
-    setSelectedOwner(owner);
-    fetchDraft(owner);
-  };
 
   if (loading) {
     return (
@@ -92,9 +89,13 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
     );
   }
 
+  // Draft is locked with entries — show leaderboard
   if (draftData.draft.status === "locked" && draftEntries && draftEntries.length > 0) {
     return <Leaderboard config={config} entries={draftEntries} />;
   }
+
+  // Draft is open or closed — show draft pick UI
+  const needsAuth = !session?.user && draftData.draft.status === "open";
 
   return (
     <>
@@ -104,12 +105,38 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
         lastUpdated={null}
         onRefresh={() => {}}
       />
+
+      {needsAuth && (
+        <div className="max-w-5xl mx-auto px-4 pt-6">
+          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-6 text-center">
+            <p className="text-gray-300 text-sm mb-3">Sign in to make your picks</p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-6 py-2.5 text-black font-semibold text-sm rounded-lg transition-colors cursor-pointer"
+              style={{ backgroundColor: config.theme.accent }}
+            >
+              Sign In / Create Account
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={() => {
+            setShowAuthModal(false);
+            fetchDraft();
+          }}
+        />
+      )}
+
       <DraftPickView
         draftData={draftData}
         config={config}
-        selectedOwner={selectedOwner}
-        onOwnerChange={handleOwnerChange}
-        onPicksSubmitted={() => fetchDraft()}
+        onPicksSubmitted={fetchDraft}
+        leagueId={leagueId}
+        isMember={isMember}
       />
     </>
   );

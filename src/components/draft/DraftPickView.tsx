@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { DraftData } from "@/lib/draft/types";
 import { TournamentConfig } from "@/lib/tournaments";
 import { useTheme } from "@/lib/ThemeContext";
@@ -9,9 +10,9 @@ import TierCard from "./TierCard";
 interface DraftPickViewProps {
   draftData: DraftData;
   config: TournamentConfig;
-  selectedOwner: string;
-  onOwnerChange: (owner: string) => void;
   onPicksSubmitted: () => void;
+  leagueId?: string;
+  isMember?: boolean;
 }
 
 function getDeadlineInfo(firstTeeTime: string): { deadlineStr: string; timeLeft: string | null; isPast: boolean } {
@@ -49,13 +50,12 @@ function getDeadlineInfo(firstTeeTime: string): { deadlineStr: string; timeLeft:
 export default function DraftPickView({
   draftData,
   config,
-  selectedOwner,
-  onOwnerChange,
   onPicksSubmitted,
 }: DraftPickViewProps) {
   const theme = useTheme();
+  const { data: session } = useSession();
   const { draft, tiers, golfers, picks, members } = draftData;
-  const pickCounts = (draftData as DraftData & { pickCounts?: { owner: string; count: string }[] }).pickCounts || [];
+  const pickCounts = draftData.pickCounts || [];
 
   const [selections, setSelections] = useState<Record<number, string>>({});
   const [tiebreaker, setTiebreaker] = useState("");
@@ -67,23 +67,35 @@ export default function DraftPickView({
   const isClosed = draft.status === "closed" || draft.status === "locked";
   const deadlineInfo = getDeadlineInfo(config.firstTeeTime);
 
-  // Load existing picks when owner changes
+  const currentUserName = session?.user?.name || "";
+  const isLoggedIn = !!session?.user;
+
+  // Check if user is a draft member
+  const isDraftMember = members.some(
+    (m) => m.user_id === session?.user?.id || m.name === currentUserName
+  );
+
+  // Load existing picks for current user
   useEffect(() => {
-    if (!selectedOwner) {
+    if (!isLoggedIn) {
       setSelections({});
       setTiebreaker("");
       setSubmitted(false);
       return;
     }
 
-    const ownerPicks = picks.filter((p) => p.owner === selectedOwner);
-    if (ownerPicks.length > 0) {
+    // Find picks belonging to current user (by user_id or owner name)
+    const myPicks = picks.filter(
+      (p) => p.user_id === session?.user?.id || p.owner === currentUserName
+    );
+
+    if (myPicks.length > 0) {
       const sel: Record<number, string> = {};
-      for (const p of ownerPicks) {
+      for (const p of myPicks) {
         sel[p.tier_number] = p.golfer_name;
       }
       setSelections(sel);
-      const tb = ownerPicks.find((p) => p.tiebreaker_guess != null)?.tiebreaker_guess;
+      const tb = myPicks.find((p) => p.tiebreaker_guess != null)?.tiebreaker_guess;
       setTiebreaker(tb?.toString() || "");
       setSubmitted(true);
     } else {
@@ -91,7 +103,7 @@ export default function DraftPickView({
       setTiebreaker("");
       setSubmitted(false);
     }
-  }, [selectedOwner, picks]);
+  }, [isLoggedIn, picks, session?.user?.id, currentUserName]);
 
   const handleSelect = (tierNumber: number, golferName: string) => {
     setSelections((prev) => ({
@@ -102,7 +114,7 @@ export default function DraftPickView({
   };
 
   const allTiersPicked = tiers.every((t) => selections[t.tier_number]);
-  const canSubmit = isOpen && selectedOwner && allTiersPicked && tiebreaker.trim() !== "";
+  const canSubmit = isOpen && isLoggedIn && allTiersPicked && tiebreaker.trim() !== "";
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -119,7 +131,7 @@ export default function DraftPickView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          owner: selectedOwner,
+          owner: currentUserName,
           picks: picksPayload,
           tiebreaker_guess: parseInt(tiebreaker),
         }),
@@ -138,7 +150,8 @@ export default function DraftPickView({
     setSubmitting(false);
   };
 
-  // Count how many members have picked
+  if (!isLoggedIn) return null;
+
   const pickedCount = pickCounts.length;
   const totalMembers = members.length;
 
@@ -172,51 +185,45 @@ export default function DraftPickView({
         </div>
       )}
 
-      {/* Name selector */}
-      <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
-        <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-2">
-          Select Your Name
-        </label>
-        <select
-          value={selectedOwner}
-          onChange={(e) => onOwnerChange(e.target.value)}
-          className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none transition-colors"
-          style={{ borderColor: selectedOwner ? theme.accent : "#3a3e3a" }}
-        >
-          <option value="">Choose your name...</option>
-          {members.map((m) => {
-            const hasPicked = pickCounts.some((pc) => pc.owner === m.name);
-            return (
-              <option key={m.name} value={m.name}>
-                {m.name}{hasPicked ? " ✓" : ""}
-              </option>
-            );
-          })}
-        </select>
-        {isOpen && (
-          <p className="text-xs text-gray-500 mt-2">
-            {pickedCount} of {totalMembers} members have submitted picks
-            {" · "}Your picks are private until the draft locks
-          </p>
-        )}
+      {/* User identity card (replaces name dropdown) */}
+      <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1">
+            Picking as
+          </span>
+          <span className="text-white font-semibold text-sm">{currentUserName}</span>
+        </div>
+        <div className="text-right">
+          {isOpen && (
+            <span className="text-xs text-gray-500">
+              {pickedCount} of {totalMembers} submitted
+              {" · "}Picks are private until lock
+            </span>
+          )}
+          {submitted && (
+            <span
+              className="text-[10px] font-bold uppercase px-2 py-1 rounded ml-2"
+              style={{ backgroundColor: `${theme.primary}30`, color: theme.badgeText }}
+            >
+              Submitted
+            </span>
+          )}
+        </div>
       </div>
 
+      {!isDraftMember && (
+        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-6 text-center">
+          <p className="text-gray-400 text-sm">You are not a member of this draft. Contact the league commissioner to be added.</p>
+        </div>
+      )}
+
       {/* Tier cards */}
-      {selectedOwner && (
+      {isDraftMember && (
         <>
-          {/* Progress indicator */}
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
               {Object.values(selections).filter(Boolean).length} / {tiers.length} tiers selected
             </span>
-            {submitted && (
-              <span
-                className="text-[10px] font-bold uppercase px-2 py-1 rounded"
-                style={{ backgroundColor: `${theme.primary}30`, color: theme.badgeText }}
-              >
-                Picks Submitted
-              </span>
-            )}
           </div>
 
           {tiers.map((tier) => {
