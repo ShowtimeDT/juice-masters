@@ -3,25 +3,38 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { TOURNAMENTS } from "@/lib/tournaments";
-import { MOCK_PGA_DRAFT } from "@/lib/draft/mock-pga";
+import { TOURNAMENTS, TournamentConfig } from "@/lib/tournaments";
+import { Draft, DraftGolfer } from "@/lib/draft/types";
+import TierEditor from "@/components/admin/TierEditor";
 
 interface LeagueData {
   league: { id: string; name: string; slug: string; commissioner_id: string; invite_code: string };
   members: { user_id: string; display_name: string; email: string }[];
 }
 
-interface Draft {
-  id: string;
-  tournament_id: string;
-  name: string;
-  status: string;
-  league_id: string;
+const tournamentConfigs = TOURNAMENTS.filter((t) => t.id !== "season");
+
+function getCloseTimeOptions(firstTeeTime: string) {
+  const tee = new Date(firstTeeTime);
+  return [
+    { label: "1 day before first tee", value: new Date(tee.getTime() - 24 * 60 * 60 * 1000).toISOString() },
+    { label: "1 hour before first tee", value: new Date(tee.getTime() - 60 * 60 * 1000).toISOString() },
+    { label: "15 minutes before first tee", value: new Date(tee.getTime() - 15 * 60 * 1000).toISOString() },
+    { label: "1 minute before first tee", value: new Date(tee.getTime() - 60 * 1000).toISOString() },
+  ];
 }
 
-const tournamentOptions = TOURNAMENTS.filter((t) => t.id !== "season");
+function canFetchField(config: TournamentConfig): boolean {
+  if (!config.firstTeeTime) return false;
+  const tee = new Date(config.firstTeeTime);
+  const monday = new Date(tee);
+  monday.setDate(monday.getDate() - 3);
+  monday.setHours(0, 0, 0, 0);
+  return new Date() >= monday;
+}
 
 function statusColor(status: string) {
+  if (status === "pending") return "bg-purple-500/20 text-purple-400";
   if (status === "open") return "bg-green-500/20 text-green-400";
   if (status === "closed") return "bg-yellow-500/20 text-yellow-400";
   if (status === "locked") return "bg-blue-500/20 text-blue-400";
@@ -39,31 +52,27 @@ export default function ManageLeaguePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Draft creation
-  const [showCreateDraft, setShowCreateDraft] = useState(false);
-  const [newDraftTournament, setNewDraftTournament] = useState("pga");
-  const [newDraftName, setNewDraftName] = useState("");
-  const [seeding, setSeeding] = useState(false);
+  // Tier editor state
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [editingGolfers, setEditingGolfers] = useState<DraftGolfer[]>([]);
+  const [selectedCloseTime, setSelectedCloseTime] = useState<string>("");
+
+  // Fetch state
+  const [fetching, setFetching] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       const leagueRes = await fetch(`/api/leagues/${slug}`);
-      if (!leagueRes.ok) {
-        setError("League not found");
-        setLoading(false);
-        return;
-      }
+      if (!leagueRes.ok) { setError("League not found"); setLoading(false); return; }
       const ld = await leagueRes.json();
       setLeagueData(ld);
 
-      // Check commissioner
       if (session?.user?.id !== ld.league.commissioner_id) {
         setError("Only the commissioner can manage this league");
         setLoading(false);
         return;
       }
 
-      // Fetch drafts for this league
       const draftsRes = await fetch("/api/draft/list");
       if (draftsRes.ok) {
         const allDrafts = await draftsRes.json();
@@ -80,60 +89,65 @@ export default function ManageLeaguePage() {
     else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
   }, [authStatus, fetchData, router, slug]);
 
-  const createDraft = async () => {
-    if (!newDraftName.trim() || !leagueData) return;
-    await fetch("/api/draft/create", {
+  const fetchField = async (tournamentId: string) => {
+    if (!leagueData) return;
+    setFetching(tournamentId);
+    try {
+      const res = await fetch("/api/draft/auto-populate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tournament_id: tournamentId, league_id: leagueData.league.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to fetch field");
+      } else {
+        // Open tier editor
+        setEditingDraftId(data.draft.id);
+        setEditingGolfers(data.golfers);
+        const config = tournamentConfigs.find((t) => t.id === tournamentId);
+        if (config?.firstTeeTime) {
+          const options = getCloseTimeOptions(config.firstTeeTime);
+          setSelectedCloseTime(options[2].value); // Default: 15 min before
+        }
+        fetchData();
+      }
+    } catch {
+      alert("Failed to fetch field");
+    }
+    setFetching(null);
+  };
+
+  const saveTiers = async (golfers: { name: string; espn_id: string; tier_number: number }[]) => {
+    if (!editingDraftId) return;
+    await fetch(`/api/draft/${editingDraftId}/golfers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        tournament_id: newDraftTournament,
-        name: newDraftName,
-        league_id: leagueData.league.id,
+        golfers: golfers.map((g) => ({ tier_number: g.tier_number, name: g.name, espn_id: g.espn_id })),
       }),
     });
-    setNewDraftName("");
-    setShowCreateDraft(false);
-    fetchData();
   };
 
-  const seedMockDraft = async () => {
-    if (!leagueData) return;
-    setSeeding(true);
-    try {
-      const createRes = await fetch("/api/draft/create", {
+  const startDraft = async (draftId: string) => {
+    // Set close time
+    if (selectedCloseTime) {
+      await fetch(`/api/draft/${draftId}/close-time`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tournament_id: MOCK_PGA_DRAFT.tournament_id,
-          name: MOCK_PGA_DRAFT.name,
-          league_id: leagueData.league.id,
-        }),
+        body: JSON.stringify({ close_time: selectedCloseTime }),
       });
-      const draft = await createRes.json();
-
-      await fetch(`/api/draft/${draft.id}/tiers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tiers: MOCK_PGA_DRAFT.tiers }),
-      });
-
-      await fetch(`/api/draft/${draft.id}/golfers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ golfers: MOCK_PGA_DRAFT.golfers }),
-      });
-
-      await fetch(`/api/draft/${draft.id}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ members: MOCK_PGA_DRAFT.members }),
-      });
-
-      fetchData();
-    } catch (err) {
-      console.error("Seed error:", err);
     }
-    setSeeding(false);
+
+    // Change status to open
+    await fetch(`/api/draft/${draftId}/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-password": "commissioner" },
+      body: JSON.stringify({ status: "open" }),
+    });
+
+    setEditingDraftId(null);
+    fetchData();
   };
 
   const changeStatus = async (draftId: string, newStatus: string) => {
@@ -143,6 +157,19 @@ export default function ManageLeaguePage() {
       body: JSON.stringify({ status: newStatus }),
     });
     fetchData();
+  };
+
+  const reviewDraft = async (draftId: string) => {
+    const res = await fetch(`/api/draft/${draftId}`);
+    const data = await res.json();
+    setEditingDraftId(draftId);
+    setEditingGolfers(data.golfers);
+    const draft = drafts.find((d) => d.id === draftId);
+    const config = tournamentConfigs.find((t) => t.id === draft?.tournament_id);
+    if (config?.firstTeeTime) {
+      const options = getCloseTimeOptions(config.firstTeeTime);
+      setSelectedCloseTime(options[2].value);
+    }
   };
 
   if (loading || authStatus === "loading") {
@@ -186,113 +213,132 @@ export default function ManageLeaguePage() {
               {typeof window !== "undefined" ? `${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}` : ""}
             </code>
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}`);
-              }}
+              onClick={() => navigator.clipboard.writeText(`${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}`)}
               className="px-3 py-2 bg-[#C8A951] text-black font-semibold text-xs rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer shrink-0"
             >
               Copy
             </button>
           </div>
-          <p className="text-gray-500 text-xs mt-2">Share this link with people you want to join your league.</p>
+          <p className="text-gray-500 text-xs mt-2">
+            {leagueData.members.length} member{leagueData.members.length !== 1 ? "s" : ""} in league
+          </p>
         </div>
 
-        {/* Members */}
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
-            Members ({leagueData.members.length})
-          </h2>
-          <div className="space-y-2">
-            {leagueData.members.map((m) => (
-              <div key={m.user_id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                <span className="text-gray-300 text-sm">{m.display_name}</span>
-                <span className="text-gray-500 text-xs">{m.email}</span>
+        {/* Tier Editor (shown when reviewing a draft) */}
+        {editingDraftId && (
+          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4 space-y-4">
+            <TierEditor
+              initialGolfers={editingGolfers.map((g) => ({ name: g.name, espn_id: g.espn_id, tier_number: g.tier_number }))}
+              numTiers={8}
+              onSave={saveTiers}
+            />
+
+            <div className="border-t border-[#3a3e3a] pt-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+                    Draft Closes
+                  </label>
+                  <select
+                    value={selectedCloseTime}
+                    onChange={(e) => setSelectedCloseTime(e.target.value)}
+                    className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#C8A951]"
+                  >
+                    {(() => {
+                      const draft = drafts.find((d) => d.id === editingDraftId);
+                      const config = tournamentConfigs.find((t) => t.id === draft?.tournament_id);
+                      if (!config?.firstTeeTime) return null;
+                      return getCloseTimeOptions(config.firstTeeTime).map((opt) => (
+                        <option key={opt.label} value={opt.value}>{opt.label}</option>
+                      ));
+                    })()}
+                  </select>
+                </div>
+                <button
+                  onClick={() => startDraft(editingDraftId)}
+                  className="px-6 py-2.5 bg-green-600 text-white font-semibold text-sm rounded-lg hover:bg-green-500 transition-colors cursor-pointer mt-5"
+                >
+                  Start Draft
+                </button>
+                <button
+                  onClick={() => setEditingDraftId(null)}
+                  className="px-4 py-2.5 text-gray-400 text-sm hover:text-white cursor-pointer mt-5"
+                >
+                  Cancel
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Drafts */}
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-white font-bold text-sm uppercase tracking-wide">Drafts</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={seedMockDraft}
-                disabled={seeding}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#111314] border border-[#3a3e3a] text-gray-300 hover:text-white hover:border-[#C8A951] transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {seeding ? "Seeding..." : "Seed PGA Mock"}
-              </button>
-              <button
-                onClick={() => setShowCreateDraft(!showCreateDraft)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#C8A951] text-black hover:bg-[#d4b96a] transition-colors cursor-pointer"
-              >
-                Create Draft
-              </button>
             </div>
           </div>
+        )}
 
-          {showCreateDraft && (
-            <div className="flex gap-2 mb-4">
-              <select
-                value={newDraftTournament}
-                onChange={(e) => setNewDraftTournament(e.target.value)}
-                className="bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#C8A951]"
-              >
-                {tournamentOptions.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-              <input
-                value={newDraftName}
-                onChange={(e) => setNewDraftName(e.target.value)}
-                placeholder="Draft name"
-                className="flex-1 bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#C8A951]"
-              />
-              <button
-                onClick={createDraft}
-                className="px-4 py-2 bg-[#C8A951] text-black font-semibold text-sm rounded-lg cursor-pointer"
-              >
-                Create
-              </button>
-            </div>
-          )}
+        {/* Tournament Cards */}
+        <h2 className="text-white font-bold text-sm uppercase tracking-wide">Tournaments</h2>
+        <div className="space-y-3">
+          {tournamentConfigs.map((config) => {
+            const draft = drafts.find((d) => d.tournament_id === config.id);
+            const fieldAvailable = canFetchField(config);
+            const hasDraft = !!draft;
 
-          {drafts.length === 0 ? (
-            <p className="text-gray-500 text-sm">No drafts yet. Create one for your league.</p>
-          ) : (
-            <div className="space-y-2">
-              {drafts.map((draft) => {
-                const tournament = tournamentOptions.find((t) => t.id === draft.tournament_id);
-                return (
-                  <div key={draft.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                    <div>
-                      <span className="text-gray-300 text-sm">{draft.name}</span>
-                      <span className="text-gray-500 text-xs ml-2">{tournament?.shortName}</span>
-                    </div>
+            return (
+              <div
+                key={config.id}
+                className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded ${statusColor(draft.status)}`}>
-                        {draft.status}
-                      </span>
-                      {draft.status === "open" && (
-                        <button onClick={() => changeStatus(draft.id, "closed")} className="text-yellow-400 text-xs hover:text-white cursor-pointer">Close</button>
-                      )}
-                      {draft.status === "closed" && (
-                        <>
-                          <button onClick={() => changeStatus(draft.id, "open")} className="text-green-400 text-xs hover:text-white cursor-pointer">Reopen</button>
-                          <button onClick={() => changeStatus(draft.id, "locked")} className="text-blue-400 text-xs hover:text-white cursor-pointer">Lock</button>
-                        </>
-                      )}
-                      {draft.status === "locked" && (
-                        <button onClick={() => changeStatus(draft.id, "closed")} className="text-yellow-400 text-xs hover:text-white cursor-pointer">Unlock</button>
+                      <h3 className="text-white font-semibold text-sm">{config.name}</h3>
+                      {draft && (
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${statusColor(draft.status)}`}>
+                          {draft.status}
+                        </span>
                       )}
                     </div>
+                    <p className="text-gray-500 text-xs mt-1">{config.dates} · {config.venue}</p>
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  <div className="flex items-center gap-2">
+                    {!hasDraft && !fieldAvailable && (
+                      <span className="text-gray-500 text-xs">Field not available yet</span>
+                    )}
+                    {!hasDraft && fieldAvailable && (
+                      <button
+                        onClick={() => fetchField(config.id)}
+                        disabled={fetching === config.id}
+                        className="px-4 py-2 bg-green-600 text-white font-semibold text-xs rounded-lg hover:bg-green-500 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {fetching === config.id ? "Fetching..." : "Fetch Field & Create Draft"}
+                      </button>
+                    )}
+                    {draft?.status === "pending" && (
+                      <button
+                        onClick={() => reviewDraft(draft.id)}
+                        className="px-4 py-2 bg-purple-600 text-white font-semibold text-xs rounded-lg hover:bg-purple-500 transition-colors cursor-pointer"
+                      >
+                        Review & Start Draft
+                      </button>
+                    )}
+                    {draft?.status === "open" && (
+                      <button
+                        onClick={() => changeStatus(draft.id, "locked")}
+                        className="px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-500 transition-colors cursor-pointer"
+                      >
+                        Lock Draft
+                      </button>
+                    )}
+                    {draft?.status === "locked" && (
+                      <button
+                        onClick={() => changeStatus(draft.id, "open")}
+                        className="px-3 py-1.5 text-xs text-yellow-400 hover:text-white cursor-pointer"
+                      >
+                        Reopen
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </main>
     </div>

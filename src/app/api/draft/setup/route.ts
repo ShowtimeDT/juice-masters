@@ -59,6 +59,12 @@ export async function POST() {
       )
     `;
 
+    // Add columns that may not exist yet
+    try { await sql`ALTER TABLE drafts ADD COLUMN close_time TIMESTAMP`; } catch { /* already exists */ }
+    try { await sql`ALTER TABLE drafts ADD COLUMN league_id UUID`; } catch { /* already exists */ }
+    try { await sql`ALTER TABLE draft_picks ADD COLUMN user_id UUID`; } catch { /* already exists */ }
+    try { await sql`ALTER TABLE draft_members ADD COLUMN user_id UUID`; } catch { /* already exists */ }
+
     return NextResponse.json({ success: true, message: "Tables created" });
   } catch (error) {
     console.error("Setup error:", error);

@@ -2,7 +2,9 @@ export interface Draft {
   id: string;
   tournament_id: string;
   name: string;
-  status: "open" | "closed" | "locked";
+  status: "pending" | "open" | "closed" | "locked";
+  close_time: string | null;
+  league_id: string | null;
   created_at: string;
 }
 

@@ -34,7 +34,7 @@ export async function POST(
     }
 
     const { status } = await request.json();
-    if (!["open", "closed", "locked"].includes(status)) {
+    if (!["pending", "open", "closed", "locked"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 

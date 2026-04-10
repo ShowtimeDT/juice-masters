@@ -32,16 +32,28 @@ export async function GET(
     const draft = drafts[0];
     const draftId = draft.id as string;
 
-    // Check if draft should auto-lock
+    // Don't return pending drafts to non-commissioners
+    if (draft.status === "pending") {
+      return NextResponse.json(null);
+    }
+
+    // Check if draft should auto-lock based on close_time or firstTeeTime fallback
     if (draft.status === "open") {
-      const tournament = TOURNAMENTS.find((t) => t.id === tournamentId);
-      if (tournament?.firstTeeTime) {
-        const deadline = new Date(tournament.firstTeeTime);
-        deadline.setMinutes(deadline.getMinutes() - LOCK_MINUTES_BEFORE);
-        if (new Date() >= deadline) {
-          await sql`UPDATE drafts SET status = 'locked' WHERE id = ${draftId}`;
-          draft.status = "locked";
+      let deadline: Date | null = null;
+
+      if (draft.close_time) {
+        deadline = new Date(draft.close_time as string);
+      } else {
+        const tournament = TOURNAMENTS.find((t) => t.id === tournamentId);
+        if (tournament?.firstTeeTime) {
+          deadline = new Date(tournament.firstTeeTime);
+          deadline.setMinutes(deadline.getMinutes() - LOCK_MINUTES_BEFORE);
         }
+      }
+
+      if (deadline && new Date() >= deadline) {
+        await sql`UPDATE drafts SET status = 'locked' WHERE id = ${draftId}`;
+        draft.status = "locked";
       }
     }
 
