@@ -275,9 +275,9 @@ export default function ManageLeaguePage() {
           </div>
         )}
 
-        {/* Tournament Cards */}
-        <h2 className="text-white font-bold text-sm uppercase tracking-wide">Tournaments</h2>
-        <div className="space-y-3">
+        {/* Tournament Cards (hidden when editing tiers) */}
+        {!editingDraftId && <h2 className="text-white font-bold text-sm uppercase tracking-wide">Tournaments</h2>}
+        {!editingDraftId && <div className="space-y-3">
           {tournamentConfigs.map((config) => {
             const draft = drafts.find((d) => d.tournament_id === config.id);
             const fieldAvailable = canFetchField(config);
@@ -357,7 +357,7 @@ export default function ManageLeaguePage() {
               </div>
             );
           })}
-        </div>
+        </div>}
       </main>
     </div>
   );
