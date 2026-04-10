@@ -5,6 +5,8 @@ import { TOURNAMENTS } from "@/lib/tournaments";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 const NUM_TIERS = 8;
+const GOLFERS_PER_TIER = 10;
+const MAX_GOLFERS = NUM_TIERS * GOLFERS_PER_TIER; // 80
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -57,27 +59,22 @@ export async function POST(request: NextRequest) {
       (a: { order: number }, b: { order: number }) => (a.order || 999) - (b.order || 999)
     );
 
-    // Auto-assign tiers: split evenly, lower tiers get extras
-    const totalGolfers = sorted.length;
-    const baseSize = Math.floor(totalGolfers / NUM_TIERS);
-    const extras = totalGolfers % NUM_TIERS;
+    // Take top 80 golfers by odds/ranking
+    const topGolfers = sorted.slice(0, MAX_GOLFERS);
 
-    // Build tier assignments
+    // Build tier assignments: 10 golfers per tier
     const tiers: { tier_number: number; name: string }[] = [];
     const golfers: { tier_number: number; name: string; espn_id: string }[] = [];
 
     let idx = 0;
     for (let t = 1; t <= NUM_TIERS; t++) {
-      // Lower tiers (higher numbers) get the extra golfers
-      const tierSize = baseSize + (t > NUM_TIERS - extras ? 1 : 0);
-
       tiers.push({
         tier_number: t,
         name: `Tier ${t}`,
       });
 
-      for (let g = 0; g < tierSize && idx < sorted.length; g++) {
-        const comp = sorted[idx];
+      for (let g = 0; g < GOLFERS_PER_TIER && idx < topGolfers.length; g++) {
+        const comp = topGolfers[idx];
         golfers.push({
           tier_number: t,
           name: comp.athlete?.displayName || comp.athlete?.fullName || "Unknown",
