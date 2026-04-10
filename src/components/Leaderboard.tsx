@@ -1,20 +1,26 @@
 "use client";
 
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
-import { ENTRIES } from "@/lib/entries";
+import { getEntriesForTournament } from "@/lib/entries";
 import { calculateStandings } from "@/lib/scoring";
+import { TournamentConfig } from "@/lib/tournaments";
 import TournamentHeader from "./TournamentHeader";
 import EntryRow from "./EntryRow";
 import TiebreakerPanel from "./TiebreakerPanel";
 
-export default function Leaderboard() {
-  const { data, lastUpdated, isLoading, error, refresh } = useAutoRefresh();
+interface LeaderboardProps {
+  config: TournamentConfig;
+}
+
+export default function Leaderboard({ config }: LeaderboardProps) {
+  const { data, lastUpdated, isLoading, error, refresh } = useAutoRefresh(config.espnDatesParam);
+  const entries = getEntriesForTournament(config.id);
 
   if (isLoading && !data) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-8 h-8 border-2 border-[#006747] border-t-transparent rounded-full animate-spin mb-4" />
+          <div className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: config.theme.primary, borderTopColor: 'transparent' }} />
           <p className="text-gray-400 text-sm">Loading scores...</p>
         </div>
       </div>
@@ -29,7 +35,8 @@ export default function Leaderboard() {
           <p className="text-gray-500 text-xs">{error}</p>
           <button
             onClick={refresh}
-            className="mt-4 px-4 py-2 bg-[#006747] text-white text-sm rounded-lg hover:bg-[#007a54] transition-colors cursor-pointer"
+            className="mt-4 px-4 py-2 text-white text-sm rounded-lg transition-colors cursor-pointer"
+            style={{ backgroundColor: config.theme.primary }}
           >
             Try Again
           </button>
@@ -38,12 +45,12 @@ export default function Leaderboard() {
     );
   }
 
-  const standings = calculateStandings(ENTRIES, data);
+  const standings = calculateStandings(entries, data);
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div>
       <TournamentHeader
-        name={data.name}
+        tournamentName={config.name}
         roundStatus={data.roundStatus}
         lastUpdated={lastUpdated}
         onRefresh={refresh}

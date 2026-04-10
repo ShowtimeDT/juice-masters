@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Juice Masters",
-  description: "Juice Masters Pick'Em League Standings",
+  title: "Juice Tour",
+  description: "Juice Tour — Pick'Em League Standings for all 4 Golf Majors",
 };
 
 export default function RootLayout({

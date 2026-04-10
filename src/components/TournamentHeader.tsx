@@ -1,20 +1,23 @@
 "use client";
 
 import Image from "next/image";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface TournamentHeaderProps {
-  name: string;
+  tournamentName: string;
   roundStatus: string;
   lastUpdated: Date | null;
   onRefresh: () => void;
 }
 
 export default function TournamentHeader({
-  name,
+  tournamentName,
   roundStatus,
   lastUpdated,
   onRefresh,
 }: TournamentHeaderProps) {
+  const theme = useTheme();
+
   const formattedTime = lastUpdated
     ? `UPDATED: ${lastUpdated
         .toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -26,10 +29,15 @@ export default function TournamentHeader({
 
   return (
     <header className="relative overflow-hidden">
-      {/* Green gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#3a5c3c] via-[#2e4e30] to-[#1e3a24]" />
+      {/* Gradient background — themed per tournament */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom, ${theme.gradientFrom}, ${theme.gradientVia}, ${theme.gradientTo})`,
+        }}
+      />
 
-      {/* Hedge/grass texture overlay */}
+      {/* Texture overlay */}
       <div
         className="absolute inset-0 opacity-[0.07]"
         style={{
@@ -40,11 +48,11 @@ export default function TournamentHeader({
       {/* Content */}
       <div className="relative max-w-6xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8">
-          {/* Logo — above title on mobile, left of title on desktop */}
+          {/* Logo */}
           <div className="shrink-0">
             <Image
               src="/logo-v3.png"
-              alt="Juice Masters Logo"
+              alt="Juice Logo"
               width={130}
               height={150}
               className="drop-shadow-lg w-[70px] h-[80px] sm:w-[130px] sm:h-[150px]"
@@ -55,14 +63,18 @@ export default function TournamentHeader({
           {/* Title block */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
-              Juice Masters
+              {tournamentName}
             </h1>
-            <p className="hidden sm:block text-[#8a9e82] text-xs mt-2 tracking-[0.35em] uppercase font-medium">
+            <p
+              className="hidden sm:block text-xs mt-2 tracking-[0.35em] uppercase font-medium"
+              style={{ color: theme.accentMuted }}
+            >
               Pick &apos;Em League Standings
             </p>
             <button
               onClick={onRefresh}
-              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[#7a8e72] text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+              style={{ color: theme.accentMuted }}
             >
               <span>{formattedTime || roundStatus}</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

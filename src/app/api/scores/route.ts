@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const ESPN_URL =
+const ESPN_BASE =
   "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const res = await fetch(ESPN_URL, {
+    const dates = request.nextUrl.searchParams.get("dates");
+    const url = dates ? `${ESPN_BASE}?dates=${dates}` : ESPN_BASE;
+
+    const res = await fetch(url, {
       next: { revalidate: 60 },
     });
 

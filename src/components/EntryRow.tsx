@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { EntryStanding } from "@/lib/types";
+import { useTheme } from "@/lib/ThemeContext";
 import GolferRow from "./GolferRow";
 
 function headshotUrl(espnId: string): string {
@@ -38,6 +39,7 @@ function rankSuffix(rank: number): string {
 
 export default function EntryRow({ standing }: EntryRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const theme = useTheme();
   const { entry, golferScores, countingScore, rank } = standing;
 
   const topFive = [...golferScores]
@@ -76,8 +78,9 @@ export default function EntryRow({ standing }: EntryRowProps) {
                 className={`relative w-10 h-10 rounded-full overflow-hidden bg-[#2a2e2a] border-2 transition-colors ${
                   g.missedCut
                     ? "border-red-500/40 grayscale opacity-60"
-                    : "border-[#3a5a3a] hover:border-[#4a7a4a]"
+                    : ""
                 }`}
+                style={!g.missedCut ? { borderColor: theme.accent } : undefined}
               >
                 {g.espnId ? (
                   <Image

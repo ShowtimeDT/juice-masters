@@ -102,8 +102,9 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export async function fetchTournamentData(): Promise<TournamentData> {
-  const res = await fetch("/api/scores", { cache: "no-store" });
+export async function fetchTournamentData(espnDatesParam?: string): Promise<TournamentData> {
+  const url = espnDatesParam ? `/api/scores?dates=${espnDatesParam}` : "/api/scores";
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch scores: ${res.status}`);
   }

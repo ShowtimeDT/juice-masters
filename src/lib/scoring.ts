@@ -1,5 +1,5 @@
 import { Entry, EntryStanding, GolferScore, GolferScoreWithCounting, TournamentData } from "./types";
-import { resolveGolferName } from "./entries";
+import { resolveGolferName } from "./entries/index";
 
 const CUT_PENALTY = 10;
 const COUNTING_GOLFERS = 5;
