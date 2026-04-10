@@ -47,7 +47,7 @@ export default function TournamentHeader({
 
       {/* Content */}
       <div className="relative max-w-6xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8">
+        <div className="flex flex-col items-center text-center gap-2">
           {/* Logo */}
           <div className="shrink-0">
             <Image
@@ -55,14 +55,14 @@ export default function TournamentHeader({
               alt="Juice Logo"
               width={130}
               height={150}
-              className="drop-shadow-lg w-[70px] h-[80px] sm:w-[130px] sm:h-[150px]"
+              className="drop-shadow-lg w-[70px] h-[80px] sm:w-[100px] sm:h-[115px]"
               priority
             />
           </div>
 
           {/* Title block */}
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
+          <div>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
               {tournamentName}
             </h1>
             <p
@@ -71,16 +71,18 @@ export default function TournamentHeader({
             >
               Pick &apos;Em League Standings
             </p>
-            <button
-              onClick={onRefresh}
-              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
-              style={{ color: theme.accentMuted }}
-            >
-              <span>{formattedTime || roundStatus}</span>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
+            {(formattedTime || roundStatus) && (
+              <button
+                onClick={onRefresh}
+                className="hidden sm:inline-flex items-center gap-2 mt-2 text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+                style={{ color: theme.accentMuted }}
+              >
+                <span>{formattedTime || roundStatus}</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
