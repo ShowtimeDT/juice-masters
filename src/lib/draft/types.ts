@@ -37,10 +37,16 @@ export interface DraftMember {
   name: string;
 }
 
+export interface PickCount {
+  owner: string;
+  count: string;
+}
+
 export interface DraftData {
   draft: Draft;
   tiers: DraftTier[];
   golfers: DraftGolfer[];
   picks: DraftPick[];
   members: DraftMember[];
+  pickCounts?: PickCount[];
 }

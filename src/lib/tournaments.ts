@@ -23,6 +23,7 @@ export interface TournamentConfig {
   theme: TournamentTheme;
   hasEntries: boolean;
   fieldConfirmationDate: string;
+  firstTeeTime: string; // ISO datetime of first tee time (ET)
 }
 
 const mastersTheme: TournamentTheme = {
@@ -97,6 +98,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: mastersTheme,
     hasEntries: true,
     fieldConfirmationDate: "Mid-March 2026",
+    firstTeeTime: "2026-04-09T08:00:00-04:00",
   },
   {
     id: "pga",
@@ -109,6 +111,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: pgaTheme,
     hasEntries: false,
     fieldConfirmationDate: "Late April 2026",
+    firstTeeTime: "2026-05-14T07:00:00-04:00",
   },
   {
     id: "us-open",
@@ -121,6 +124,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: usOpenTheme,
     hasEntries: false,
     fieldConfirmationDate: "Early June 2026",
+    firstTeeTime: "2026-06-18T06:45:00-04:00",
   },
   {
     id: "the-open",
@@ -133,6 +137,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: theOpenTheme,
     hasEntries: false,
     fieldConfirmationDate: "Late June 2026",
+    firstTeeTime: "2026-07-16T01:35:00-04:00",
   },
   {
     id: "season",
@@ -145,6 +150,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: seasonTheme,
     hasEntries: false,
     fieldConfirmationDate: "",
+    firstTeeTime: "",
   },
 ];
 

@@ -17,10 +17,15 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
   const [draftData, setDraftData] = useState<DraftData | null>(null);
   const [draftEntries, setDraftEntries] = useState<Entry[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedOwner, setSelectedOwner] = useState("");
 
-  const fetchDraft = useCallback(async () => {
+  const fetchDraft = useCallback(async (owner?: string) => {
     try {
-      const res = await fetch(`/api/draft/tournament/${config.id}`);
+      const ownerParam = owner || selectedOwner;
+      const url = ownerParam
+        ? `/api/draft/tournament/${config.id}?owner=${encodeURIComponent(ownerParam)}`
+        : `/api/draft/tournament/${config.id}`;
+      const res = await fetch(url);
       const data = await res.json();
 
       if (!data || !data.draft) {
@@ -32,7 +37,6 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
 
       setDraftData(data);
 
-      // If draft is locked, fetch entries
       if (data.draft.status === "locked") {
         const entriesRes = await fetch(`/api/draft/${data.draft.id}/entries`);
         if (entriesRes.ok) {
@@ -47,11 +51,16 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
       setDraftEntries(null);
     }
     setLoading(false);
-  }, [config.id]);
+  }, [config.id, selectedOwner]);
 
   useEffect(() => {
     fetchDraft();
   }, [fetchDraft]);
+
+  const handleOwnerChange = (owner: string) => {
+    setSelectedOwner(owner);
+    fetchDraft(owner);
+  };
 
   if (loading) {
     return (
@@ -69,7 +78,6 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
     );
   }
 
-  // No draft exists — show placeholder
   if (!draftData) {
     return (
       <>
@@ -84,12 +92,10 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
     );
   }
 
-  // Draft is locked with entries — show leaderboard
   if (draftData.draft.status === "locked" && draftEntries && draftEntries.length > 0) {
     return <Leaderboard config={config} entries={draftEntries} />;
   }
 
-  // Draft is open or closed — show draft pick UI
   return (
     <>
       <TournamentHeader
@@ -98,7 +104,13 @@ export default function DraftAwareTournament({ config }: DraftAwareTournamentPro
         lastUpdated={null}
         onRefresh={() => {}}
       />
-      <DraftPickView draftData={draftData} onPicksSubmitted={fetchDraft} />
+      <DraftPickView
+        draftData={draftData}
+        config={config}
+        selectedOwner={selectedOwner}
+        onOwnerChange={handleOwnerChange}
+        onPicksSubmitted={() => fetchDraft()}
+      />
     </>
   );
 }
