@@ -9,31 +9,22 @@ import TierEditor from "@/components/admin/TierEditor";
 
 const tournamentConfigs = TOURNAMENTS.filter((t) => t.id !== "season");
 
-const CLOSE_TIME_OPTIONS = [
-  { key: "1day", label: "1 day before first tee", offsetMs: 24 * 60 * 60 * 1000 },
-  { key: "1hr", label: "1 hour before first tee", offsetMs: 60 * 60 * 1000 },
-  { key: "15min", label: "15 minutes before first tee", offsetMs: 15 * 60 * 1000 },
-  { key: "1min", label: "1 minute before first tee", offsetMs: 60 * 1000 },
-];
-
-function closeTimeKeyToISO(key: string, firstTeeTime: string): string {
-  const opt = CLOSE_TIME_OPTIONS.find((o) => o.key === key);
-  if (!opt) return new Date(new Date(firstTeeTime).getTime() - 15 * 60 * 1000).toISOString();
-  return new Date(new Date(firstTeeTime).getTime() - opt.offsetMs).toISOString();
+// Convert ISO string to datetime-local input format (YYYY-MM-DDTHH:MM)
+function isoToLocalInput(isoStr: string): string {
+  const d = new Date(isoStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function closeTimeISOToKey(isoStr: string, firstTeeTime: string): string {
-  const tee = new Date(firstTeeTime).getTime();
-  const close = new Date(isoStr).getTime();
-  const diffMs = tee - close;
-  // Find closest matching option
-  let bestKey = "15min";
-  let bestDiff = Infinity;
-  for (const opt of CLOSE_TIME_OPTIONS) {
-    const d = Math.abs(diffMs - opt.offsetMs);
-    if (d < bestDiff) { bestDiff = d; bestKey = opt.key; }
-  }
-  return bestKey;
+// Get default close time: 15 minutes before first tee, in local input format
+function getDefaultCloseTime(firstTeeTime: string): string {
+  const tee = new Date(firstTeeTime);
+  const close = new Date(tee.getTime() - 15 * 60 * 1000);
+  return isoToLocalInput(close.toISOString());
 }
 
 function statusColor(status: string) {
@@ -60,7 +51,7 @@ export default function TournamentSettingsPage() {
   const [leagueData, setLeagueData] = useState<LeagueData | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [golfers, setGolfers] = useState<DraftGolfer[]>([]);
-  const [selectedCloseTimeKey, setSelectedCloseTimeKey] = useState("15min");
+  const [closeTimeLocal, setCloseTimeLocal] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -95,10 +86,10 @@ export default function TournamentSettingsPage() {
           setCurrentGolfers(golfersData.map((g: DraftGolfer) => ({ name: g.name, espn_id: g.espn_id, tier_number: g.tier_number })));
 
           // Set close time — default to 15 min before first tee
-          if (d.close_time && config?.firstTeeTime) {
-            setSelectedCloseTimeKey(closeTimeISOToKey(d.close_time as string, config.firstTeeTime));
-          } else {
-            setSelectedCloseTimeKey("15min");
+          if (d.close_time) {
+            setCloseTimeLocal(isoToLocalInput(d.close_time as string));
+          } else if (config?.firstTeeTime) {
+            setCloseTimeLocal(getDefaultCloseTime(config.firstTeeTime));
           }
         }
       }
@@ -129,8 +120,8 @@ export default function TournamentSettingsPage() {
     }
 
     // Save close time
-    if (config?.firstTeeTime) {
-      const closeTimeISO = closeTimeKeyToISO(selectedCloseTimeKey, config.firstTeeTime);
+    if (closeTimeLocal) {
+      const closeTimeISO = new Date(closeTimeLocal).toISOString();
       await fetch(`/api/draft/${draft.id}/close-time`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -268,17 +259,19 @@ export default function TournamentSettingsPage() {
             {/* Close Time Setting */}
             <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
               <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-2">
-                Draft Closes
+                Draft Closes (Date & Time)
               </label>
-              <select
-                value={selectedCloseTimeKey}
-                onChange={(e) => setSelectedCloseTimeKey(e.target.value)}
+              <input
+                type="datetime-local"
+                value={closeTimeLocal}
+                onChange={(e) => setCloseTimeLocal(e.target.value)}
                 className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#C8A951]"
-              >
-                {CLOSE_TIME_OPTIONS.map((opt) => (
-                  <option key={opt.key} value={opt.key}>{opt.label}</option>
-                ))}
-              </select>
+              />
+              {config.firstTeeTime && (
+                <p className="text-gray-500 text-xs mt-2">
+                  First tee time: {new Date(config.firstTeeTime).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                </p>
+              )}
             </div>
 
             {/* Tier Editor */}
