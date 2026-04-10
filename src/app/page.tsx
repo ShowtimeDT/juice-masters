@@ -37,12 +37,6 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json();
         setLeagues(data);
-
-        // Auto-redirect if user is in exactly one league
-        if (data.length === 1) {
-          router.replace(`/league/${data[0].slug}`);
-          return;
-        }
       }
     } catch {
       // ignore

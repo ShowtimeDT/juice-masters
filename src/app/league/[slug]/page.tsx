@@ -111,15 +111,13 @@ function LeagueContent() {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button
-                  onClick={() => hasMultipleLeagues && setShowLeagueDropdown(!showLeagueDropdown)}
-                  className={`text-gray-300 text-xs uppercase tracking-wider font-semibold flex items-center gap-1 ${hasMultipleLeagues ? "cursor-pointer hover:text-white" : ""}`}
+                  onClick={() => setShowLeagueDropdown(!showLeagueDropdown)}
+                  className="text-gray-300 text-xs uppercase tracking-wider font-semibold flex items-center gap-1 cursor-pointer hover:text-white"
                 >
                   {leagueData.league.name}
-                  {hasMultipleLeagues && (
-                    <svg className={`w-3 h-3 transition-transform ${showLeagueDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
+                  <svg className={`w-3 h-3 transition-transform ${showLeagueDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
 
                 {/* League dropdown */}
@@ -129,7 +127,7 @@ function LeagueContent() {
                       <a
                         key={league.id}
                         href={`/league/${league.slug}`}
-                        className={`block px-4 py-2 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                        className={`block px-4 py-2 text-sm transition-colors ${
                           league.slug === slug
                             ? "text-white bg-white/5"
                             : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -139,6 +137,15 @@ function LeagueContent() {
                         {league.name}
                       </a>
                     ))}
+                    <div className="border-t border-[#3a3e3a]">
+                      <a
+                        href="/"
+                        className="block px-4 py-2 text-xs text-[#C8A951] hover:text-white transition-colors rounded-b-lg"
+                        onClick={() => setShowLeagueDropdown(false)}
+                      >
+                        + Join or Create League
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
