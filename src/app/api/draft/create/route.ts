@@ -4,13 +4,20 @@ import { getDb } from "@/lib/db";
 export async function POST(request: NextRequest) {
   const sql = getDb();
   try {
-    const { tournament_id, name } = await request.json();
+    const { tournament_id, name, league_id } = await request.json();
     const id = `draft-${tournament_id}-${Date.now()}`;
 
-    await sql`
-      INSERT INTO drafts (id, tournament_id, name, status)
-      VALUES (${id}, ${tournament_id}, ${name}, 'open')
-    `;
+    if (league_id) {
+      await sql`
+        INSERT INTO drafts (id, tournament_id, name, status, league_id)
+        VALUES (${id}, ${tournament_id}, ${name}, 'open', ${league_id})
+      `;
+    } else {
+      await sql`
+        INSERT INTO drafts (id, tournament_id, name, status)
+        VALUES (${id}, ${tournament_id}, ${name}, 'open')
+      `;
+    }
 
     const [draft] = await sql`SELECT * FROM drafts WHERE id = ${id}`;
     return NextResponse.json(draft);

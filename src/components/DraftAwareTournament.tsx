@@ -26,7 +26,8 @@ export default function DraftAwareTournament({ config, leagueId, isMember }: Dra
 
   const fetchDraft = useCallback(async () => {
     try {
-      const url = `/api/draft/tournament/${config.id}`;
+      const leagueParam = leagueId ? `?league_id=${leagueId}` : "";
+      const url = `/api/draft/tournament/${config.id}${leagueParam}`;
       const res = await fetch(url);
       const data = await res.json();
 
@@ -53,7 +54,7 @@ export default function DraftAwareTournament({ config, leagueId, isMember }: Dra
       setDraftEntries(null);
     }
     setLoading(false);
-  }, [config.id]);
+  }, [config.id, leagueId]);
 
   useEffect(() => {
     fetchDraft();

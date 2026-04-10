@@ -9,12 +9,21 @@ export async function GET(
   { params }: { params: Promise<{ tournamentId: string }> }
 ) {
   const { tournamentId } = await params;
+  const leagueId = request.nextUrl.searchParams.get("league_id");
   const sql = getDb();
 
   try {
-    const drafts = await sql`
-      SELECT * FROM drafts WHERE tournament_id = ${tournamentId} ORDER BY created_at DESC LIMIT 1
-    `;
+    let drafts;
+    if (leagueId) {
+      drafts = await sql`
+        SELECT * FROM drafts WHERE tournament_id = ${tournamentId} AND league_id = ${leagueId} ORDER BY created_at DESC LIMIT 1
+      `;
+    } else {
+      // Backward compat: drafts without a league_id (old mock data)
+      drafts = await sql`
+        SELECT * FROM drafts WHERE tournament_id = ${tournamentId} AND league_id IS NULL ORDER BY created_at DESC LIMIT 1
+      `;
+    }
 
     if (drafts.length === 0) {
       return NextResponse.json(null);
@@ -47,26 +56,21 @@ export async function GET(
     `;
 
     // Only return the requesting user's picks when draft is open/closed
-    // Return all picks when draft is locked (tournament started)
     const owner = request.nextUrl.searchParams.get("owner");
     let picks: Record<string, unknown>[];
 
     if (draft.status === "locked") {
-      // Everyone can see all picks
       picks = await sql`
         SELECT * FROM draft_picks WHERE draft_id = ${draftId} ORDER BY owner, tier_number
       `;
     } else if (owner) {
-      // Only return this user's picks
       picks = await sql`
         SELECT * FROM draft_picks WHERE draft_id = ${draftId} AND owner = ${owner} ORDER BY tier_number
       `;
     } else {
-      // No picks returned — can't see anyone's picks without identifying yourself
       picks = [];
     }
 
-    // Include pick count per member (so UI can show who has/hasn't picked without revealing picks)
     const pickCounts = await sql`
       SELECT owner, COUNT(*) as count FROM draft_picks WHERE draft_id = ${draftId} GROUP BY owner
     `;
