@@ -64,10 +64,15 @@ export default function EntryRow({ standing }: EntryRowProps) {
         </div>
 
         {/* Name */}
-        <div className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex items-center">
+        <div className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex flex-col justify-center">
           <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
             {entry.name}
           </h3>
+          {entry.owner !== entry.name && (
+            <p className="text-gray-500 text-[10px] sm:text-xs leading-tight truncate">
+              {entry.owner}
+            </p>
+          )}
         </div>
 
         {/* Top 5 headshots - desktop only */}

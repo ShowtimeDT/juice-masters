@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const members = await sql`
-      SELECT lm.*, u.email FROM league_members lm
+      SELECT lm.*, u.email, u.username FROM league_members lm
       JOIN users u ON u.id = lm.user_id
       WHERE lm.league_id = ${league.id}
       ORDER BY lm.joined_at

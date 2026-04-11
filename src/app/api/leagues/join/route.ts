@@ -29,10 +29,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ league, alreadyMember: true });
     }
 
-    // Add as member
+    // Get user's username for default team name
+    const [user] = await sql`SELECT username, name FROM users WHERE id = ${session.user.id}`;
+    const displayName = user?.name || session.user.name || "Unknown";
+    const defaultTeamName = `${user?.username || displayName}'s Team`;
+
+    // Add as member with default team name
     await sql`
-      INSERT INTO league_members (league_id, user_id, display_name)
-      VALUES (${league.id}, ${session.user.id}, ${session.user.name || 'Unknown'})
+      INSERT INTO league_members (league_id, user_id, display_name, team_name)
+      VALUES (${league.id}, ${session.user.id}, ${displayName}, ${defaultTeamName})
     `;
 
     return NextResponse.json({ league, joined: true });

@@ -103,6 +103,7 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
 
                   {/* Name */}
                   <span className="text-white font-medium truncate">{standing.owner}</span>
+                  {/* TODO: show team_name once season standings support it */}
 
                   {/* Per-tournament scores */}
                   {standing.tournamentResults.map((tr) => (

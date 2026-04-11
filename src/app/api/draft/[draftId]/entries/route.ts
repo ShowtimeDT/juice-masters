@@ -19,6 +19,20 @@ export async function GET(
       SELECT * FROM draft_picks WHERE draft_id = ${draftId} ORDER BY owner, tier_number
     `;
 
+    // Get league members for team names
+    let teamNames = new Map<string, { team_name: string; display_name: string }>();
+    if (draft.league_id) {
+      const members = await sql`
+        SELECT display_name, team_name FROM league_members WHERE league_id = ${draft.league_id}
+      `;
+      for (const m of members) {
+        teamNames.set(m.display_name as string, {
+          team_name: (m.team_name as string) || `${m.display_name}'s Team`,
+          display_name: m.display_name as string,
+        });
+      }
+    }
+
     // Group picks by owner
     const picksByOwner = new Map<string, typeof picks>();
     for (const pick of picks) {
@@ -37,9 +51,12 @@ export async function GET(
       const golfers = sorted.map((p) => p.golfer_name as string);
       const tiebreaker = sorted.find((p) => p.tiebreaker_guess != null)?.tiebreaker_guess as number || 0;
 
+      const memberInfo = teamNames.get(owner);
+      const entryName = memberInfo?.team_name || `${owner}'s Team`;
+
       entries.push({
         id: `draft-entry-${idx}`,
-        name: owner,
+        name: entryName,
         owner: owner,
         golfers,
         tiebreakerGuess: tiebreaker,

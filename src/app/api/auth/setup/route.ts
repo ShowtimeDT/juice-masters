@@ -47,6 +47,8 @@ export async function POST() {
     try { await sql`ALTER TABLE drafts ADD COLUMN league_id UUID REFERENCES leagues(id)`; } catch { /* already exists */ }
     try { await sql`ALTER TABLE draft_picks ADD COLUMN user_id UUID REFERENCES users(id)`; } catch { /* already exists */ }
     try { await sql`ALTER TABLE draft_members ADD COLUMN user_id UUID REFERENCES users(id)`; } catch { /* already exists */ }
+    try { await sql`ALTER TABLE users ADD COLUMN username TEXT UNIQUE`; } catch { /* already exists */ }
+    try { await sql`ALTER TABLE league_members ADD COLUMN team_name TEXT`; } catch { /* already exists */ }
 
     return NextResponse.json({ success: true, message: "Auth tables created" });
   } catch (error) {

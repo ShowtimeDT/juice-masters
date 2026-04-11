@@ -12,6 +12,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,11 +24,10 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
 
     try {
       if (isSignup) {
-        // Create account first
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, name, password }),
+          body: JSON.stringify({ email, name, username, password }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -37,7 +37,6 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
         }
       }
 
-      // Sign in
       const result = await signIn("credentials", {
         email,
         password,
@@ -69,19 +68,37 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {isSignup && (
-          <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
-              Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name (shown on leaderboard)"
-              required={isSignup}
-              className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
-            />
-          </div>
+          <>
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your full name"
+                required={isSignup}
+                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                placeholder="Choose a username"
+                required={isSignup}
+                minLength={3}
+                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+              />
+              <p className="text-gray-600 text-[10px] mt-1">Letters, numbers, and underscores only</p>
+            </div>
+          </>
         )}
 
         <div>
