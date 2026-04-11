@@ -10,6 +10,12 @@ function scoreColor(score: number): string {
   return "text-gray-300";
 }
 
+function formatScore(score: number): string {
+  if (score === 0) return "E";
+  if (score > 0) return `+${score}`;
+  return score.toString();
+}
+
 export default function GolferRow({ golfer }: GolferRowProps) {
   const opacity = golfer.isCounting ? "opacity-100" : "opacity-40";
 
@@ -35,9 +41,7 @@ export default function GolferRow({ golfer }: GolferRowProps) {
 
       {/* Total score */}
       <span className={`text-right font-mono font-semibold text-xs sm:text-sm ${scoreColor(golfer.effectiveScore)}`}>
-        {golfer.scoreDisplay === "-" ? "-" : golfer.missedCut
-          ? `${golfer.scoreDisplay} (+10)`
-          : golfer.scoreDisplay}
+        {golfer.scoreDisplay === "-" ? "-" : formatScore(golfer.effectiveScore)}
       </span>
 
       {/* Spacer between score and rounds */}
