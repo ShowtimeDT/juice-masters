@@ -108,7 +108,7 @@ export default function EntryRow({ standing }: EntryRowProps) {
                     : "text-[#9a9e9a]"
                 }`}
               >
-                {g.scoreDisplay === "-" ? "-" : g.scoreDisplay}
+                {g.scoreDisplay === "-" ? "-" : formatScore(g.effectiveScore)}
               </span>
             </div>
           ))}

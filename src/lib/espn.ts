@@ -30,27 +30,28 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
 
   for (let i = 0; i < 4; i++) {
     const roundData = linescores[i];
-    if (roundData && roundData.displayValue) {
-      const holeScores = roundData.linescores || [];
-      const holesPlayed = holeScores.length;
+    if (!roundData) break;
+    // ESPN includes a placeholder round entry for the current round before
+    // a golfer tees off (and for missed-cut golfers it stays as "-"). Treat
+    // a missing or "-" displayValue as "no real round here" and stop.
+    if (!roundData.displayValue || roundData.displayValue === "-") break;
 
-      rounds.push({
-        round: i + 1,
-        score: roundData.displayValue,
-      });
+    const holeScores = roundData.linescores || [];
+    const holesPlayed = holeScores.length;
 
-      // Determine thru based on the latest active round
-      if (i + 1 === currentRound || (i + 1 === linescores.length && !linescores[i + 1])) {
-        // This is the current/latest round for this golfer
-        if (holesPlayed >= 18) {
-          thru = "F";
-        } else if (holesPlayed > 0) {
-          thru = holesPlayed.toString();
-        }
+    rounds.push({
+      round: i + 1,
+      score: roundData.displayValue,
+    });
+
+    // Determine thru based on the latest active round
+    if (i + 1 === currentRound || (i + 1 === linescores.length && !linescores[i + 1])) {
+      // This is the current/latest round for this golfer
+      if (holesPlayed >= 18) {
+        thru = "F";
+      } else if (holesPlayed > 0) {
+        thru = holesPlayed.toString();
       }
-    } else if (roundData && !roundData.displayValue) {
-      // Round exists but no score yet (future round placeholder)
-      break;
     }
   }
 
@@ -82,10 +83,8 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
     }
   }
 
-  // Detect missed cut
-  // After round 2, if golfer only has 2 rounds of data and current round > 2
-  const missedCut = currentRound > 2 && rounds.length <= 2 && rounds.length > 0;
-
+  // missedCut is set in a second pass by detectMissedCuts() once we know the
+  // tournament's cut score from ESPN's core API.
   const position = competitor.sortOrder?.toString() || "-";
 
   return {
@@ -95,12 +94,39 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
     scoreDisplay,
     rounds,
     birdies,
-    missedCut,
+    missedCut: false,
     position,
     thru,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
+
+// Apply the +10 missed-cut penalty using ESPN's authoritative cut score.
+// Anyone whose 36-hole total is strictly worse than the cut line missed the
+// cut. Anyone who didn't even complete 36 holes (WD/DQ before the cut) is
+// also flagged so they pick up the penalty too.
+function detectMissedCuts(
+  golferScores: Map<string, GolferScore>,
+  currentRound: number,
+  cutRound: number,
+  cutScore: number | null | undefined
+): void {
+  if (currentRound <= cutRound) return;
+  if (cutScore == null) return;
+
+  for (const g of golferScores.values()) {
+    if (g.rounds.length < 2) {
+      // WD or DQ before the cut was made — apply the penalty too.
+      g.missedCut = true;
+      continue;
+    }
+    const total =
+      parseScore(g.rounds[0].score) + parseScore(g.rounds[1].score);
+    if (total > cutScore) {
+      g.missedCut = true;
+    }
+  }
+}
 
 export async function fetchTournamentData(): Promise<TournamentData> {
   const res = await fetch("/api/scores", { cache: "no-store" });
@@ -112,12 +138,20 @@ export async function fetchTournamentData(): Promise<TournamentData> {
   const event = data.events?.[0];
   const competition = event?.competitions?.[0];
   const competitors = competition?.competitors || [];
+  const tournamentMeta = event?.tournamentMeta;
 
   const tournamentName = event?.name || "The Masters";
 
-  // Determine current round
+  // Determine current round. ESPN's site-API scoreboard does NOT expose
+  // status.period on the event itself — the real round number lives on the
+  // core-API tournament metadata (injected by /api/scores) or, as a fallback,
+  // on competition.status.period.
   const statusDetail = event?.status?.type?.detail || "";
-  const roundNum = event?.status?.period || 1;
+  const roundNum =
+    tournamentMeta?.currentRound ??
+    competition?.status?.period ??
+    event?.status?.period ??
+    1;
   const statusState = event?.status?.type?.state || "pre";
   let roundStatus = statusDetail;
   if (statusState === "pre") {
@@ -133,6 +167,14 @@ export async function fetchTournamentData(): Promise<TournamentData> {
     golferScores.set(golfer.name, golfer);
     totalBirdies += golfer.birdies;
   }
+
+  // Apply missed-cut penalties using ESPN's authoritative cut line.
+  detectMissedCuts(
+    golferScores,
+    roundNum,
+    tournamentMeta?.cutRound ?? 2,
+    tournamentMeta?.cutScore
+  );
 
   return {
     name: tournamentName,
