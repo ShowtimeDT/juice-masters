@@ -261,12 +261,17 @@ export default function TournamentSettingsPage() {
               <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-2">
                 Draft Closes (Date & Time)
               </label>
-              <input
-                type="datetime-local"
-                value={closeTimeLocal}
-                onChange={(e) => setCloseTimeLocal(e.target.value)}
-                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#C8A951]"
-              />
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={closeTimeLocal}
+                  onChange={(e) => setCloseTimeLocal(e.target.value)}
+                  className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#C8A951] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                />
+                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
               {config.firstTeeTime && (
                 <p className="text-gray-500 text-xs mt-2">
                   First tee time: {new Date(config.firstTeeTime).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
