@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { TournamentData } from "@/lib/types";
 import { fetchTournamentData } from "@/lib/espn";
+import { TournamentId } from "@/lib/tournaments";
 
-export function useAutoRefresh(intervalMs = 120_000) {
+export function useAutoRefresh(tournamentId: TournamentId, intervalMs = 120_000) {
   const [data, setData] = useState<TournamentData | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,7 +13,7 @@ export function useAutoRefresh(intervalMs = 120_000) {
 
   const refresh = useCallback(async () => {
     try {
-      const tournament = await fetchTournamentData();
+      const tournament = await fetchTournamentData(tournamentId);
       setData(tournament);
       setLastUpdated(new Date());
       setError(null);
@@ -22,7 +23,7 @@ export function useAutoRefresh(intervalMs = 120_000) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [tournamentId]);
 
   useEffect(() => {
     refresh();

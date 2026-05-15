@@ -1,6 +1,6 @@
-import { Entry } from "./types";
+import { Entry } from "../types";
 
-export const ENTRIES: Entry[] = [
+export const MASTERS_ENTRIES: Entry[] = [
   {
     id: "entry-1",
     name: "James T",
@@ -306,19 +306,3 @@ export const ENTRIES: Entry[] = [
     tiebreakerGuess: 945,
   },
 ];
-
-// Name aliases: entry name -> ESPN's athlete.fullName
-export const NAME_ALIASES: Record<string, string> = {
-  "Ludvig Aberg": "Ludvig Åberg",
-  "Nicolai Hojgaard": "Nicolai Højgaard",
-  "Rasmus Hojgaard": "Rasmus Højgaard",
-  "Sami Valimaki": "Sami Välimäki",
-  "Sung-Jae Im": "Sungjae Im",
-  "JJ Spaun": "J.J. Spaun",
-  "John Keefer": "Johnny Keefer",
-  "Rasmus Neergaard": "Rasmus Neergaard-Petersen",
-};
-
-export function resolveGolferName(name: string): string {
-  return NAME_ALIASES[name] || name;
-}

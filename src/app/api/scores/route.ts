@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getTournament, isTournamentId } from "@/lib/tournaments";
 
 const ESPN_URL =
   "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
@@ -43,9 +44,13 @@ async function attachTournamentMeta(data: any): Promise<void> {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const res = await fetch(ESPN_URL, {
+    const t = new URL(req.url).searchParams.get("t");
+    const tournament = getTournament(isTournamentId(t) ? t : "pga");
+    const espnUrl = `${ESPN_URL}?dates=${tournament.espnDatesParam}`;
+
+    const res = await fetch(espnUrl, {
       next: { revalidate: 60 },
     });
 

@@ -1,4 +1,5 @@
 import { GolferScore, RoundScore, TournamentData } from "./types";
+import { getTournament, TournamentId } from "./tournaments";
 
 function parseScore(score: string | undefined | null): number {
   if (!score || score === "-" || score === "") return 0;
@@ -128,8 +129,10 @@ function detectMissedCuts(
   }
 }
 
-export async function fetchTournamentData(): Promise<TournamentData> {
-  const res = await fetch("/api/scores", { cache: "no-store" });
+export async function fetchTournamentData(
+  tournamentId: TournamentId
+): Promise<TournamentData> {
+  const res = await fetch(`/api/scores?t=${tournamentId}`, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch scores: ${res.status}`);
   }
@@ -140,7 +143,7 @@ export async function fetchTournamentData(): Promise<TournamentData> {
   const competitors = competition?.competitors || [];
   const tournamentMeta = event?.tournamentMeta;
 
-  const tournamentName = event?.name || "The Masters";
+  const tournamentName = event?.name || getTournament(tournamentId).name;
 
   // Determine current round. ESPN's site-API scoreboard does NOT expose
   // status.period on the event itself — the real round number lives on the

@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import { TournamentConfig } from "@/lib/tournaments";
 
 interface TournamentHeaderProps {
-  name: string;
+  tournament: TournamentConfig;
   roundStatus: string;
   lastUpdated: Date | null;
   onRefresh: () => void;
 }
 
 export default function TournamentHeader({
-  name,
+  tournament,
   roundStatus,
   lastUpdated,
   onRefresh,
@@ -18,18 +19,23 @@ export default function TournamentHeader({
   const formattedTime = lastUpdated
     ? `UPDATED: ${lastUpdated
         .toLocaleDateString("en-US", { month: "short", day: "numeric" })
-        .toUpperCase()}, ${lastUpdated.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      }).toUpperCase()}`
+        .toUpperCase()}, ${lastUpdated
+        .toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+        .toUpperCase()}`
     : "";
 
   return (
     <header className="relative overflow-hidden">
-      {/* Green gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#3a5c3c] via-[#2e4e30] to-[#1e3a24]" />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, ${tournament.theme.gradientFrom}, ${tournament.theme.gradientVia}, ${tournament.theme.gradientTo})`,
+        }}
+      />
 
-      {/* Hedge/grass texture overlay */}
       <div
         className="absolute inset-0 opacity-[0.07]"
         style={{
@@ -37,14 +43,12 @@ export default function TournamentHeader({
         }}
       />
 
-      {/* Content */}
       <div className="relative max-w-6xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8">
-          {/* Logo — above title on mobile, left of title on desktop */}
           <div className="shrink-0">
             <Image
               src="/logo-v3.png"
-              alt="Juice Masters Logo"
+              alt={`${tournament.name} logo`}
               width={130}
               height={150}
               className="drop-shadow-lg w-[70px] h-[80px] sm:w-[130px] sm:h-[150px]"
@@ -52,17 +56,19 @@ export default function TournamentHeader({
             />
           </div>
 
-          {/* Title block */}
           <div className="text-center">
             <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
-              Juice Masters
+              {tournament.name}
             </h1>
-            <p className="hidden sm:block text-[#8a9e82] text-xs mt-2 tracking-[0.35em] uppercase font-medium">
+            <p
+              className="hidden sm:block text-xs mt-2 tracking-[0.35em] uppercase font-medium"
+              style={{ color: tournament.theme.badgeText }}
+            >
               Pick &apos;Em League Standings
             </p>
             <button
               onClick={onRefresh}
-              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[#7a8e72] text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[#9aa0a6] text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
             >
               <span>{formattedTime || roundStatus}</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

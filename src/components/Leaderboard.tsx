@@ -1,20 +1,31 @@
 "use client";
 
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
-import { ENTRIES } from "@/lib/entries";
+import { getEntriesForTournament } from "@/lib/entries/index";
 import { calculateStandings } from "@/lib/scoring";
+import { getTournament, TournamentId } from "@/lib/tournaments";
 import TournamentHeader from "./TournamentHeader";
 import EntryRow from "./EntryRow";
 import TiebreakerPanel from "./TiebreakerPanel";
 
-export default function Leaderboard() {
-  const { data, lastUpdated, isLoading, error, refresh } = useAutoRefresh();
+interface LeaderboardProps {
+  tournamentId: TournamentId;
+}
+
+export default function Leaderboard({ tournamentId }: LeaderboardProps) {
+  const { data, lastUpdated, isLoading, error, refresh } =
+    useAutoRefresh(tournamentId);
+  const tournament = getTournament(tournamentId);
+  const entries = getEntriesForTournament(tournamentId);
 
   if (isLoading && !data) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-8 h-8 border-2 border-[#006747] border-t-transparent rounded-full animate-spin mb-4" />
+          <div
+            className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4"
+            style={{ borderColor: tournament.theme.primary, borderTopColor: "transparent" }}
+          />
           <p className="text-gray-400 text-sm">Loading scores...</p>
         </div>
       </div>
@@ -29,7 +40,8 @@ export default function Leaderboard() {
           <p className="text-gray-500 text-xs">{error}</p>
           <button
             onClick={refresh}
-            className="mt-4 px-4 py-2 bg-[#006747] text-white text-sm rounded-lg hover:bg-[#007a54] transition-colors cursor-pointer"
+            className="mt-4 px-4 py-2 text-white text-sm rounded-lg transition-colors cursor-pointer"
+            style={{ backgroundColor: tournament.theme.primary }}
           >
             Try Again
           </button>
@@ -38,12 +50,12 @@ export default function Leaderboard() {
     );
   }
 
-  const standings = calculateStandings(ENTRIES, data);
+  const standings = calculateStandings(entries, data);
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
       <TournamentHeader
-        name={data.name}
+        tournament={tournament}
         roundStatus={data.roundStatus}
         lastUpdated={lastUpdated}
         onRefresh={refresh}
@@ -58,19 +70,30 @@ export default function Leaderboard() {
       )}
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
-        {standings.map((standing) => (
-          <EntryRow
-            key={standing.entry.id}
-            standing={standing}
-          />
-        ))}
+        {standings.length === 0 ? (
+          <div className="bg-[#1e2124] border border-white/5 rounded-lg px-6 py-12 text-center">
+            <p className="text-gray-300 text-sm">
+              No entries yet for the {tournament.shortName}.
+            </p>
+            <p className="text-gray-500 text-xs mt-2">
+              Picks will appear here once they&apos;re finalized.
+            </p>
+          </div>
+        ) : (
+          <>
+            {standings.map((standing) => (
+              <EntryRow key={standing.entry.id} standing={standing} />
+            ))}
 
-        <div className="pt-4">
-          <TiebreakerPanel
-            standings={standings}
-            actualBirdies={data.totalBirdies}
-          />
-        </div>
+            <div className="pt-4">
+              <TiebreakerPanel
+                standings={standings}
+                actualBirdies={data.totalBirdies}
+                accentColor={tournament.theme.accent}
+              />
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="text-center text-gray-600 text-xs py-6">

@@ -1,5 +1,5 @@
-import Leaderboard from "@/components/Leaderboard";
+import LeaderboardPage from "@/components/LeaderboardPage";
 
 export default function Home() {
-  return <Leaderboard />;
+  return <LeaderboardPage />;
 }
