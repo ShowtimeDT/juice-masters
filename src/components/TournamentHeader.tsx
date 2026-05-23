@@ -43,9 +43,9 @@ export default function TournamentHeader({
         }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8">
-          <div className="shrink-0">
+      <div className="relative max-w-5xl mx-auto px-4 pt-5 pb-6 sm:pt-6 sm:pb-8">
+        <div className="flex flex-col items-center gap-2 sm:block">
+          <div className="shrink-0 sm:absolute sm:left-4 sm:top-1/2 sm:-translate-y-1/2">
             <Image
               src="/logo-v3.png"
               alt={`${tournament.name} logo`}
@@ -57,7 +57,7 @@ export default function TournamentHeader({
           </div>
 
           <div className="text-center">
-            <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight">
+            <h1 className="text-2xl sm:text-5xl md:text-[3.5rem] font-bold text-white tracking-[0.18em] font-serif uppercase leading-tight whitespace-pre-line">
               {tournament.name}
             </h1>
             <p
