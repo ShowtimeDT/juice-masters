@@ -19,7 +19,8 @@ export interface TournamentTheme {
 export interface TournamentConfig {
   id: TournamentId;
   name: string; // display name ("Juice Masters")
-  shortName: string; // tab label ("Masters")
+  shortName: string; // tab label ("PGA Championship")
+  columnLabel: string; // narrow-table label ("PGA")
   dates: string; // human-readable ("Jun 18–21, 2026")
   dateRange: string; // compact ("June 18-21")
   espnDatesParam: string; // ESPN scoreboard ?dates= value
@@ -103,6 +104,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     id: "masters",
     name: "Juice Masters",
     shortName: "Masters",
+    columnLabel: "Masters",
     dates: "Apr 9–12, 2026",
     dateRange: "April 9-12",
     espnDatesParam: "20260409-20260412",
@@ -116,6 +118,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     id: "pga",
     name: "Juice\nChampionship",
     shortName: "PGA Championship",
+    columnLabel: "PGA",
     dates: "May 14–17, 2026",
     dateRange: "May 14-17",
     espnDatesParam: "20260514-20260517",
@@ -129,6 +132,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     id: "us-open",
     name: "Juice Open",
     shortName: "U.S. Open",
+    columnLabel: "U.S. Open",
     dates: "Jun 18–21, 2026",
     dateRange: "June 18-21",
     espnDatesParam: "20260618-20260621",
@@ -144,6 +148,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     id: "the-open",
     name: "Juice Open Championship",
     shortName: "The Open",
+    columnLabel: "The Open",
     dates: "Jul 16–19, 2026",
     dateRange: "July 16-19",
     espnDatesParam: "20260716-20260719",
@@ -157,6 +162,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     id: "season",
     name: "Juice Tour",
     shortName: "Season",
+    columnLabel: "Season",
     dates: "2026 Season",
     dateRange: "Apr–Jul 2026",
     espnDatesParam: "",

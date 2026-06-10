@@ -76,7 +76,7 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
                 <span className="text-center">Rank</span>
                 <span>Player</span>
                 {TOURNAMENT_COLUMNS.map((t) => (
-                  <span key={t.id} className="text-center">{t.shortName}</span>
+                  <span key={t.id} className="text-center">{t.columnLabel}</span>
                 ))}
                 <span className="text-right">Total</span>
               </div>
