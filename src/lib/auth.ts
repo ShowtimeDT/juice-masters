@@ -10,9 +10,19 @@ import { resolveOAuthUser } from "./oauth-users";
 //   add Apple to providers and set AUTH_APPLE_ID / AUTH_APPLE_SECRET.
 // resolveOAuthUser already handles any OAuth provider.
 
+// Fail fast in production if the session-signing secret is missing, rather
+// than silently falling back to an insecure default.
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
+  throw new Error("AUTH_SECRET must be set in production");
+}
+
 // Only register Google when its credentials exist, so a missing env var
 // can never take down email/password login with it.
 const googleConfigured = !!(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+
+// A valid bcrypt hash of a random string, used to spend the same time on
+// failed logins as successful ones (prevents email-enumeration by timing).
+const DUMMY_HASH = "$2b$12$5FKNr6q0jxpvyQi.jIVUhuh34cB/OAHVcKZXOv30M5J0hhufp6dwG";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -32,13 +42,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials.password as string;
 
         const [user] = await sql`SELECT * FROM users WHERE lower(email) = ${email}`;
-        if (!user) return null;
+        const [pw] = user
+          ? await sql`SELECT password_hash FROM user_passwords WHERE user_id = ${user.id}`
+          : [];
 
-        const [pw] = await sql`SELECT password_hash FROM user_passwords WHERE user_id = ${user.id}`;
-        if (!pw) return null;
-
-        const valid = await bcrypt.compare(password, pw.password_hash as string);
-        if (!valid) return null;
+        // Always run a bcrypt comparison — even when the user or password
+        // row is missing — so login time doesn't reveal which emails exist.
+        const hash = (pw?.password_hash as string) ?? DUMMY_HASH;
+        const valid = await bcrypt.compare(password, hash);
+        if (!user || !pw || !valid) return null;
 
         return {
           id: user.id as string,

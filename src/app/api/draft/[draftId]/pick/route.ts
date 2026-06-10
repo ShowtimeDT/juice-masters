@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requireUser, requireLeagueMember, authzError } from "@/lib/authz";
 import { isPastDeadline } from "@/lib/draft/deadline";
+import { validTiebreaker } from "@/lib/validate";
 
 interface PickInput {
   tier_number: number;
@@ -75,11 +76,11 @@ export async function POST(
       tiebreaker_guess: number;
     };
 
-    if (!Array.isArray(picks) || picks.length === 0) {
+    if (!Array.isArray(picks) || picks.length === 0 || picks.length > 50) {
       return NextResponse.json({ error: "No picks submitted" }, { status: 400 });
     }
-    if (!Number.isFinite(tiebreaker_guess)) {
-      return NextResponse.json({ error: "Tiebreaker guess is required" }, { status: 400 });
+    if (!validTiebreaker(tiebreaker_guess)) {
+      return NextResponse.json({ error: "Tiebreaker must be a whole number" }, { status: 400 });
     }
 
     const validationError = await validatePicks(draftId, picks);
