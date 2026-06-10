@@ -1,10 +1,19 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { getDb } from "./db";
+import { resolveOAuthUser } from "./oauth-users";
+
+// To enable Apple Sign-In later (requires a paid Apple Developer account):
+//   import Apple from "next-auth/providers/apple";
+//   add Apple to providers and set AUTH_APPLE_ID / AUTH_APPLE_SECRET.
+// resolveOAuthUser already handles any OAuth provider.
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
+    Google,
     Credentials({
       name: "credentials",
       credentials: {
@@ -39,8 +48,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
+    async signIn({ account, profile }) {
+      // OAuth accounts must expose an email or we can't create a user row.
+      if (account && account.provider !== "credentials") {
+        return !!profile?.email;
+      }
+      return true;
+    },
+    async jwt({ token, user, account, profile }) {
+      if (account && account.provider !== "credentials") {
+        const userId = await resolveOAuthUser(account, profile);
+        if (userId) {
+          token.id = userId;
+          // Show the app's stored name, not the provider's.
+          const sql = getDb();
+          const [dbUser] = await sql`SELECT name FROM users WHERE id = ${userId}`;
+          if (dbUser?.name) token.name = dbUser.name as string;
+        }
+      } else if (user) {
         token.id = user.id;
       }
       return token;
