@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 
 interface AuthFormProps {
@@ -16,6 +16,15 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasGoogle, setHasGoogle] = useState(false);
+
+  // Only offer Google when the server actually has it configured.
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((providers: Record<string, unknown>) => setHasGoogle(!!providers?.google))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +76,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
       </h2>
 
       {/* OAuth providers */}
+      {hasGoogle && (
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl })}
@@ -80,12 +90,15 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
         </svg>
         Continue with Google
       </button>
+      )}
 
+      {hasGoogle && (
       <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-px bg-edge" />
         <span className="text-faint text-[10px] uppercase tracking-wider">or use email</span>
         <div className="flex-1 h-px bg-edge" />
       </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {isSignup && (

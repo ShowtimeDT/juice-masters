@@ -4,7 +4,9 @@ import { getTournament, TournamentId } from "./tournaments";
 function parseScore(score: string | undefined | null): number {
   if (!score || score === "-" || score === "") return 0;
   if (score === "E") return 0;
-  return parseInt(score, 10);
+  // "WD", "DQ", "CUT" etc. parse as NaN, which would poison every sum.
+  const parsed = parseInt(score, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function parseScoreDisplay(score: string | undefined | null): string {

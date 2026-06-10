@@ -10,10 +10,14 @@ import { resolveOAuthUser } from "./oauth-users";
 //   add Apple to providers and set AUTH_APPLE_ID / AUTH_APPLE_SECRET.
 // resolveOAuthUser already handles any OAuth provider.
 
+// Only register Google when its credentials exist, so a missing env var
+// can never take down email/password login with it.
+const googleConfigured = !!(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
-    Google,
+    ...(googleConfigured ? [Google] : []),
     Credentials({
       name: "credentials",
       credentials: {
