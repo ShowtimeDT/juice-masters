@@ -6,9 +6,17 @@ import { useSession } from "next-auth/react";
 import { TOURNAMENTS } from "@/lib/tournaments";
 import { Draft } from "@/lib/draft/types";
 
+interface LeagueMember {
+  id: number;
+  user_id: string | null;
+  display_name: string;
+  team_name: string | null;
+  username: string | null;
+}
+
 interface LeagueData {
   league: { id: string; name: string; slug: string; commissioner_id: string; invite_code: string };
-  members: { user_id: string; display_name: string; email: string }[];
+  members: LeagueMember[];
 }
 
 const tournamentConfigs = TOURNAMENTS.filter((t) => t.id !== "season");
@@ -70,6 +78,28 @@ export default function ManageLeaguePage() {
     if (authStatus === "authenticated") fetchData();
     else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
   }, [authStatus, fetchData, router, slug]);
+
+  const unlinkMember = async (member: LeagueMember) => {
+    if (!leagueData) return;
+    if (!confirm(`Unlink ${member.display_name}? They'll need to claim their name again from the invite link.`)) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/leagues/members/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ league_id: leagueData.league.id, member_id: member.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to unlink member");
+        return;
+      }
+      fetchData();
+    } catch {
+      alert("Failed to unlink member");
+    }
+  };
 
   const fetchField = async (tournamentId: string) => {
     if (!leagueData) return;
@@ -143,6 +173,52 @@ export default function ManageLeaguePage() {
           <p className="text-gray-500 text-xs mt-2">
             {leagueData.members.length} member{leagueData.members.length !== 1 ? "s" : ""} in league
           </p>
+        </div>
+
+        {/* Members */}
+        <div className="bg-card rounded-lg border border-edge overflow-hidden">
+          <div className="px-4 py-3 border-b border-edge">
+            <h2 className="text-white font-bold text-sm uppercase tracking-wide">Members</h2>
+            <p className="text-gray-500 text-xs mt-1">
+              Unclaimed members appear when someone joins via the invite link and can claim their name.
+            </p>
+          </div>
+          <div>
+            {leagueData.members.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 last:border-0"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-gray-200 text-sm truncate">{member.display_name}</span>
+                  {member.user_id === leagueData.league.commissioner_id && (
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand/20 text-brand shrink-0">
+                      Commissioner
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {member.user_id ? (
+                    <>
+                      <span className="text-green-400 text-xs">
+                        Claimed{member.username ? ` — @${member.username}` : ""}
+                      </span>
+                      {member.user_id !== leagueData.league.commissioner_id && (
+                        <button
+                          onClick={() => unlinkMember(member)}
+                          className="text-gray-500 text-xs hover:text-red-400 transition-colors cursor-pointer"
+                        >
+                          Unlink
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-500 text-xs">Unclaimed</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Tournament Cards */}

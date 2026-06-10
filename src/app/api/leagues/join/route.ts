@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { requireUser, authzError } from "@/lib/authz";
 
+/**
+ * Join a league by invite code. Pass claimMemberId to take over an
+ * unclaimed historical member slot (display name + past results) instead
+ * of joining as a brand-new member.
+ */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const user = await requireUser();
+  if (!user.ok) return authzError(user);
 
   const sql = getDb();
 
   try {
-    const { inviteCode } = await request.json();
+    const { inviteCode, claimMemberId } = await request.json();
     if (!inviteCode?.trim()) {
       return NextResponse.json({ error: "Invite code is required" }, { status: 400 });
     }
@@ -21,23 +24,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid invite code" }, { status: 404 });
     }
 
-    // Check if already a member
+    // Already a member?
     const [existing] = await sql`
-      SELECT id FROM league_members WHERE league_id = ${league.id} AND user_id = ${session.user.id}
+      SELECT id FROM league_members WHERE league_id = ${league.id} AND user_id = ${user.userId}
     `;
     if (existing) {
       return NextResponse.json({ league, alreadyMember: true });
     }
 
-    // Get user's username for default team name
-    const [user] = await sql`SELECT username, name FROM users WHERE id = ${session.user.id}`;
-    const displayName = user?.name || session.user.name || "Unknown";
-    const defaultTeamName = `${user?.username || displayName}'s Team`;
+    // Claim an unclaimed historical slot — atomic, first claim wins.
+    if (claimMemberId != null) {
+      const claimed = await sql`
+        UPDATE league_members SET user_id = ${user.userId}
+        WHERE id = ${claimMemberId} AND league_id = ${league.id} AND user_id IS NULL
+        RETURNING id, display_name
+      `;
+      if (claimed.length === 0) {
+        return NextResponse.json(
+          { error: "That member has already been claimed" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({ league, joined: true, claimed: claimed[0].display_name });
+    }
 
-    // Add as member with default team name
+    // Join as a new member.
+    const [profile] = await sql`SELECT username, name FROM users WHERE id = ${user.userId}`;
+    const displayName = (profile?.name as string) || "Unknown";
+    const defaultTeamName = `${profile?.username || displayName}'s Team`;
     await sql`
       INSERT INTO league_members (league_id, user_id, display_name, team_name)
-      VALUES (${league.id}, ${session.user.id}, ${displayName}, ${defaultTeamName})
+      VALUES (${league.id}, ${user.userId}, ${displayName}, ${defaultTeamName})
     `;
 
     return NextResponse.json({ league, joined: true });

@@ -19,7 +19,7 @@ interface LeagueInfo {
 
 interface LeagueData {
   league: LeagueInfo;
-  members: { user_id: string; display_name: string; email: string }[];
+  members: { user_id: string | null; display_name: string }[];
 }
 
 interface MyLeague {
