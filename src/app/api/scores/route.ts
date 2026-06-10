@@ -47,7 +47,14 @@ async function attachTournamentMeta(data: any): Promise<void> {
 export async function GET(req: Request) {
   try {
     const t = new URL(req.url).searchParams.get("t");
-    const tournament = getTournament(isTournamentId(t) ? t : "pga");
+    if (!isTournamentId(t)) {
+      return NextResponse.json({ error: "Unknown tournament" }, { status: 400 });
+    }
+    const tournament = getTournament(t);
+    if (!tournament.espnDatesParam) {
+      // "season" has no ESPN scoreboard of its own.
+      return NextResponse.json({ error: "Tournament has no scoreboard" }, { status: 400 });
+    }
     const espnUrl = `${ESPN_URL}?dates=${tournament.espnDatesParam}`;
 
     const res = await fetch(espnUrl, {

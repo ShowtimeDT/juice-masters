@@ -19,7 +19,14 @@ function getGolferScore(
     }
   }
 
-  // Not found - return placeholder
+  // Not found — placeholder that scores Even. Loud warning because an
+  // unmatched name (typo / missing alias) silently flatters that entry.
+  if (golferScores.size > 0) {
+    console.warn(
+      `[scoring] Golfer "${golferName}" (resolved: "${resolved}") not found in ESPN data — scoring as E. ` +
+        "Check src/lib/entries/aliases.ts."
+    );
+  }
   return {
     name: golferName,
     espnId: "",

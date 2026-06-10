@@ -18,9 +18,9 @@ export default function TiebreakerPanel({
   });
 
   return (
-    <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+    <div className="bg-card rounded-lg border border-edge overflow-hidden">
       {/* Header */}
-      <div className="px-3 sm:px-4 py-3 border-b border-[#3a3e3a] flex items-center justify-between">
+      <div className="px-3 sm:px-4 py-3 border-b border-edge flex items-center justify-between">
         <h2 className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
           Tiebreaker: Total Birdies
         </h2>
@@ -33,7 +33,7 @@ export default function TiebreakerPanel({
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold border-b border-[#3a3e3a]">
+      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-faint font-semibold border-b border-edge">
         <span>Player</span>
         <span className="text-right">Guess</span>
         <span className="text-right">Differential</span>

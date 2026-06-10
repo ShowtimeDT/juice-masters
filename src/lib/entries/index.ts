@@ -17,5 +17,7 @@ export function getEntriesForTournament(id: TournamentId): Entry[] {
       return US_OPEN_ENTRIES;
     case "the-open":
       return THE_OPEN_ENTRIES;
+    case "season":
+      return [];
   }
 }

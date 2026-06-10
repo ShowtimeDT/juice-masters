@@ -49,3 +49,4 @@ public/logo-transparent.png
 public/logo-v2.png
 public/logo.png
 
+.env*.local

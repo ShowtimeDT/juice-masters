@@ -68,7 +68,7 @@ export default function TournamentHeader({
             </p>
             <button
               onClick={onRefresh}
-              className="hidden sm:inline-flex items-center gap-2 mt-3 text-[#9aa0a6] text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-2 mt-3 text-muted text-[11px] tracking-[0.12em] uppercase hover:text-white transition-colors cursor-pointer"
             >
               <span>{formattedTime || roundStatus}</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

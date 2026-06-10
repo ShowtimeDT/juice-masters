@@ -9,7 +9,7 @@ interface TournamentTabsProps {
 
 export default function TournamentTabs({ activeId, onSelect }: TournamentTabsProps) {
   return (
-    <nav className="bg-[#1a1a1a] border-b border-white/5">
+    <nav className="bg-surface border-b border-white/5">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex gap-1 overflow-x-auto">
           {TOURNAMENTS.map((t) => {

@@ -6,6 +6,43 @@
   --foreground: #ededed;
 }
 
+/*
+ * App color palette — the single place to change the site's look.
+ * Each token becomes a Tailwind utility: bg-card, border-edge, text-under, etc.
+ * Tournament-specific colors (gradients, accents) live in src/lib/tournaments.ts.
+ */
+@theme {
+  /* Surfaces */
+  --color-surface: #1a1a1a;            /* page background */
+  --color-card: #1e2124;               /* card background */
+  --color-card-inset: #181a1c;         /* expanded-table background inside cards */
+
+  /* Borders */
+  --color-edge: #3a3e3a;               /* card borders */
+  --color-edge-hover: #4a4e4a;         /* card borders on hover */
+
+  /* Golf scores */
+  --color-under: #4ade80;              /* under par (green) */
+  --color-over: #f87171;               /* over par (red) */
+  --color-even: #9a9e9a;               /* even par */
+
+  /* Text */
+  --color-ink: #d4d4d4;                /* rank numerals */
+  --color-muted: #9aa0a6;              /* secondary text (header timestamp) */
+  --color-faint: #5a5e5a;              /* table headers, chevrons */
+  --color-label: #7a7e7a;              /* tiny labels under headshots */
+  --color-label-dim: #6b7070;          /* uppercase info labels */
+
+  /* Brand */
+  --color-brand: #C8A951;             /* Juice gold — league chrome, links, buttons */
+  --color-brand-hover: #d4b96a;       /* Juice gold hover state */
+
+  /* Headshot avatars */
+  --color-avatar: #2a2e2a;             /* avatar background */
+  --color-avatar-ring: #3a5a3a;        /* avatar border */
+  --color-avatar-ring-hover: #4a7a4a;  /* avatar border on hover */
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -19,4 +56,11 @@ body {
 
 .font-serif {
   font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Force dark mode for native date/time pickers */
+input[type="datetime-local"],
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
 }

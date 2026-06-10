@@ -4,23 +4,26 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { getEntriesForTournament } from "@/lib/entries/index";
 import { calculateStandings } from "@/lib/scoring";
 import { getTournament, TournamentId } from "@/lib/tournaments";
+import { Entry } from "@/lib/types";
 import TournamentHeader from "./TournamentHeader";
 import EntryRow from "./EntryRow";
 import TiebreakerPanel from "./TiebreakerPanel";
 
 interface LeaderboardProps {
   tournamentId: TournamentId;
+  /** Override the static entries (the draft system injects converted picks). */
+  entries?: Entry[];
 }
 
-export default function Leaderboard({ tournamentId }: LeaderboardProps) {
+export default function Leaderboard({ tournamentId, entries: entriesProp }: LeaderboardProps) {
   const { data, lastUpdated, isLoading, error, refresh } =
     useAutoRefresh(tournamentId);
   const tournament = getTournament(tournamentId);
-  const entries = getEntriesForTournament(tournamentId);
+  const entries = entriesProp ?? getEntriesForTournament(tournamentId);
 
   if (isLoading && !data) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <div
             className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4"
@@ -34,7 +37,7 @@ export default function Leaderboard({ tournamentId }: LeaderboardProps) {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center px-4">
           <p className="text-red-400 text-sm mb-2">Unable to load scores</p>
           <p className="text-gray-500 text-xs">{error}</p>
@@ -53,7 +56,7 @@ export default function Leaderboard({ tournamentId }: LeaderboardProps) {
   const standings = calculateStandings(entries, data);
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-surface">
       <TournamentHeader
         tournament={tournament}
         roundStatus={data.roundStatus}
@@ -71,7 +74,7 @@ export default function Leaderboard({ tournamentId }: LeaderboardProps) {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
         {standings.length === 0 ? (
-          <div className="bg-[#1e2124] border border-white/5 rounded-lg px-6 py-12 text-center">
+          <div className="bg-card border border-white/5 rounded-lg px-6 py-12 text-center">
             <p className="text-gray-300 text-sm">
               No entries yet for the {tournament.shortName}.
             </p>

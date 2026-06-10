@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { TournamentData } from "@/lib/types";
 import { fetchTournamentData } from "@/lib/espn";
 import { TournamentId } from "@/lib/tournaments";
@@ -10,6 +10,16 @@ export function useAutoRefresh(tournamentId: TournamentId, intervalMs = 120_000)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const prevTournamentId = useRef(tournamentId);
+
+  // Reset when switching tournaments so the old leaderboard doesn't flash
+  // while the new one loads (the league page swaps tabs without remounting).
+  if (prevTournamentId.current !== tournamentId) {
+    prevTournamentId.current = tournamentId;
+    setData(null);
+    setIsLoading(true);
+    setError(null);
+  }
 
   const refresh = useCallback(async () => {
     try {
