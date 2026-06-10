@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { getTournament, isTournamentId } from "@/lib/tournaments";
 
-const ESPN_BASE =
+const ESPN_URL =
   "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 
 const ESPN_CORE_EVENT =
@@ -43,12 +44,20 @@ async function attachTournamentMeta(data: any): Promise<void> {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export async function GET(request: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const dates = request.nextUrl.searchParams.get("dates");
-    const url = dates ? `${ESPN_BASE}?dates=${dates}` : ESPN_BASE;
+    const t = new URL(req.url).searchParams.get("t");
+    if (!isTournamentId(t)) {
+      return NextResponse.json({ error: "Unknown tournament" }, { status: 400 });
+    }
+    const tournament = getTournament(t);
+    if (!tournament.espnDatesParam) {
+      // "season" has no ESPN scoreboard of its own.
+      return NextResponse.json({ error: "Tournament has no scoreboard" }, { status: 400 });
+    }
+    const espnUrl = `${ESPN_URL}?dates=${tournament.espnDatesParam}`;
 
-    const res = await fetch(url, {
+    const res = await fetch(espnUrl, {
       next: { revalidate: 60 },
     });
 

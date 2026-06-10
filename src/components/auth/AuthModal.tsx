@@ -14,7 +14,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-8 w-full max-w-sm mx-4">
+      <div className="relative bg-card rounded-lg border border-edge p-8 w-full max-w-sm mx-4">
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-white cursor-pointer"

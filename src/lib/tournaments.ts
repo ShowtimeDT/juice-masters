@@ -1,29 +1,41 @@
 export type TournamentId = "masters" | "pga" | "us-open" | "the-open" | "season";
 
+/**
+ * Per-tournament colors. App-wide colors (cards, borders, score green/red)
+ * live in src/app/globals.css — edit there to retheme the whole site.
+ */
 export interface TournamentTheme {
-  primary: string;
-  gradientFrom: string;
-  gradientVia: string;
-  gradientTo: string;
-  accent: string;
-  accentHover: string;
-  accentMuted: string;
-  highlightBg: string;
-  badgeText: string;
+  primary: string; // buttons, active tab underline, spinners
+  gradientFrom: string; // header gradient top
+  gradientVia: string; // header gradient middle
+  gradientTo: string; // header gradient bottom
+  accent: string; // highlights (tiebreaker winner, draft accents)
+  accentHover: string; // accent hover state
+  accentMuted: string; // de-emphasized accent text
+  highlightBg: string; // translucent row-highlight background
+  badgeText: string; // small uppercase text on the header gradient
 }
 
 export interface TournamentConfig {
   id: TournamentId;
-  name: string;
-  shortName: string;
-  dates: string;
-  dateRange: string;
-  espnDatesParam: string;
+  name: string; // display name ("Juice Masters")
+  shortName: string; // tab label ("Masters")
+  dates: string; // human-readable ("Jun 18–21, 2026")
+  dateRange: string; // compact ("June 18-21")
+  espnDatesParam: string; // ESPN scoreboard ?dates= value
   venue: string;
   theme: TournamentTheme;
-  hasEntries: boolean;
-  fieldConfirmationDate: string;
-  firstTeeTime: string; // ISO datetime of first tee time (ET)
+  hasEntries: boolean; // static entries exist in src/lib/entries/
+  fieldConfirmationDate: string; // when the field is expected to be final
+  firstTeeTime: string; // ISO datetime of first tee time (ET); fallback auto-lock
+}
+
+/** Translucent version of a hex color (alpha 0–1) for row highlights. */
+function withAlpha(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 const mastersTheme: TournamentTheme = {
@@ -31,23 +43,23 @@ const mastersTheme: TournamentTheme = {
   gradientFrom: "#3a5c3c",
   gradientVia: "#2e4e30",
   gradientTo: "#1e3a24",
-  accent: "#3a5a3a",
-  accentHover: "#4a7a4a",
+  accent: "#006747",
+  accentHover: "#0a8a5f",
   accentMuted: "#8a9e82",
-  highlightBg: "rgba(0, 103, 71, 0.15)",
+  highlightBg: withAlpha("#006747", 0.15),
   badgeText: "#4ade80",
 };
 
 const pgaTheme: TournamentTheme = {
-  primary: "#00205B",
-  gradientFrom: "#1a3a6b",
+  primary: "#C8A951",
+  gradientFrom: "#00205B",
   gradientVia: "#122d55",
   gradientTo: "#0a1a3b",
   accent: "#C8A951",
   accentHover: "#d4b96a",
   accentMuted: "#8a9ab2",
-  highlightBg: "rgba(0, 32, 91, 0.15)",
-  badgeText: "#7ab8ff",
+  highlightBg: withAlpha("#C8A951", 0.15),
+  badgeText: "#C8A951",
 };
 
 const usOpenTheme: TournamentTheme = {
@@ -58,31 +70,31 @@ const usOpenTheme: TournamentTheme = {
   accent: "#003865",
   accentHover: "#0a4a7a",
   accentMuted: "#b08a92",
-  highlightBg: "rgba(196, 30, 58, 0.15)",
+  highlightBg: withAlpha("#C41E3A", 0.15),
   badgeText: "#ff7a8a",
 };
 
 const theOpenTheme: TournamentTheme = {
-  primary: "#1C2841",
+  primary: "#C3A24D",
   gradientFrom: "#2a3a5a",
   gradientVia: "#1e2d45",
   gradientTo: "#0f1a2e",
   accent: "#C3A24D",
   accentHover: "#d4b46a",
   accentMuted: "#8a9aaa",
-  highlightBg: "rgba(28, 40, 65, 0.15)",
+  highlightBg: withAlpha("#C3A24D", 0.15),
   badgeText: "#7ab8ff",
 };
 
 const seasonTheme: TournamentTheme = {
-  primary: "#2a2a2a",
+  primary: "#C8A951",
   gradientFrom: "#3a3a3a",
   gradientVia: "#2a2a2a",
   gradientTo: "#1a1a1a",
   accent: "#C8A951",
   accentHover: "#d4b96a",
   accentMuted: "#9a9a9a",
-  highlightBg: "rgba(200, 169, 81, 0.15)",
+  highlightBg: withAlpha("#C8A951", 0.15),
   badgeText: "#C8A951",
 };
 
@@ -102,21 +114,21 @@ export const TOURNAMENTS: TournamentConfig[] = [
   },
   {
     id: "pga",
-    name: "The Juice Championship",
-    shortName: "Championship",
+    name: "Juice\nChampionship",
+    shortName: "PGA Championship",
     dates: "May 14–17, 2026",
     dateRange: "May 14-17",
     espnDatesParam: "20260514-20260517",
     venue: "Aronimink Golf Club",
     theme: pgaTheme,
-    hasEntries: false,
+    hasEntries: true,
     fieldConfirmationDate: "Late April 2026",
     firstTeeTime: "2026-05-14T07:00:00-04:00",
   },
   {
     id: "us-open",
-    name: "The Juice Open",
-    shortName: "Open",
+    name: "Juice Open",
+    shortName: "U.S. Open",
     dates: "Jun 18–21, 2026",
     dateRange: "June 18-21",
     espnDatesParam: "20260618-20260621",
@@ -124,12 +136,14 @@ export const TOURNAMENTS: TournamentConfig[] = [
     theme: usOpenTheme,
     hasEntries: false,
     fieldConfirmationDate: "Early June 2026",
+    // Provisional — update when the USGA publishes tee times. The
+    // commissioner-set draft close time is the real deadline control.
     firstTeeTime: "2026-06-18T06:45:00-04:00",
   },
   {
     id: "the-open",
-    name: "The Juice Invitational",
-    shortName: "Invitational",
+    name: "Juice Open Championship",
+    shortName: "The Open",
     dates: "Jul 16–19, 2026",
     dateRange: "July 16-19",
     espnDatesParam: "20260716-20260719",
@@ -142,7 +156,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
   {
     id: "season",
     name: "Juice Tour",
-    shortName: "Tour",
+    shortName: "Season",
     dates: "2026 Season",
     dateRange: "Apr–Jul 2026",
     espnDatesParam: "",
@@ -155,5 +169,9 @@ export const TOURNAMENTS: TournamentConfig[] = [
 ];
 
 export function getTournament(id: TournamentId): TournamentConfig {
-  return TOURNAMENTS.find((t) => t.id === id) || TOURNAMENTS[0];
+  return TOURNAMENTS.find((t) => t.id === id) ?? TOURNAMENTS[0];
+}
+
+export function isTournamentId(value: string | null | undefined): value is TournamentId {
+  return TOURNAMENTS.some((t) => t.id === value);
 }

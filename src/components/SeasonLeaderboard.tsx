@@ -1,29 +1,23 @@
 "use client";
 
 import { useSeasonData } from "@/hooks/useSeasonData";
-import { useTheme } from "@/lib/ThemeContext";
-import { TOURNAMENTS } from "@/lib/tournaments";
+import { getTournament, TOURNAMENTS } from "@/lib/tournaments";
+import { formatScore, scoreColor, rankSuffix } from "@/lib/format";
 import TournamentHeader from "./TournamentHeader";
 
 const TOURNAMENT_COLUMNS = TOURNAMENTS.filter((t) => t.id !== "season");
+const SEASON = getTournament("season");
 
-function formatScore(score: number): string {
-  if (score === 0) return "E";
-  if (score > 0) return `+${score}`;
-  return score.toString();
-}
-
-function scoreColor(score: number): string {
-  if (score < 0) return "#4ade80";
-  if (score > 0) return "#f87171";
-  return "#d4d4d4";
-}
-
-function rankSuffix(rank: number): string {
-  if (rank === 1) return "st";
-  if (rank === 2) return "nd";
-  if (rank === 3) return "rd";
-  return "th";
+/** Score text, or a faint em dash when the member hasn't played. */
+function ScoreCell({ score, className = "" }: { score: number | null; className?: string }) {
+  if (score === null) {
+    return <span className={`font-mono text-faint ${className}`}>—</span>;
+  }
+  return (
+    <span className={`font-mono ${scoreColor(score)} ${className}`}>
+      {formatScore(score)}
+    </span>
+  );
 }
 
 interface SeasonLeaderboardProps {
@@ -31,21 +25,23 @@ interface SeasonLeaderboardProps {
 }
 
 export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) {
-  const theme = useTheme();
   const { standings, isLoading, lastUpdated, error, refresh } = useSeasonData(leagueId);
 
   if (isLoading && standings.length === 0) {
     return (
       <div>
         <TournamentHeader
-          tournamentName="Juice Tour"
+          tournament={SEASON}
           roundStatus="2026 Season"
           lastUpdated={null}
           onRefresh={() => {}}
         />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: theme.accent, borderTopColor: 'transparent' }} />
+            <div
+              className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-4"
+              style={{ borderColor: SEASON.theme.accent, borderTopColor: "transparent" }}
+            />
             <p className="text-gray-400 text-sm">Loading season standings...</p>
           </div>
         </div>
@@ -56,7 +52,7 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
   return (
     <div>
       <TournamentHeader
-        tournamentName="Juice Tour"
+        tournament={SEASON}
         roundStatus="2026 Season"
         lastUpdated={lastUpdated}
         onRefresh={refresh}
@@ -72,11 +68,11 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Season standings table */}
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
-          {/* Column headers */}
+        <div className="bg-card rounded-lg border border-edge overflow-hidden">
           <div className="overflow-x-auto">
             <div className="min-w-[30rem]">
-              <div className="grid grid-cols-[3rem_1fr_repeat(4,4.5rem)_5rem] px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold border-b border-[#3a3e3a]">
+              {/* Column headers */}
+              <div className="grid grid-cols-[3rem_1fr_repeat(4,4.5rem)_5rem] px-3 sm:px-4 py-2 text-[10px] uppercase tracking-wider text-faint font-semibold border-b border-edge">
                 <span className="text-center">Rank</span>
                 <span>Player</span>
                 {TOURNAMENT_COLUMNS.map((t) => (
@@ -93,36 +89,31 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
                 >
                   {/* Rank */}
                   <div className="text-center">
-                    <span className="text-lg font-serif italic font-bold text-[#d4d4d4]">
+                    <span className="text-lg font-serif italic font-bold text-ink">
                       {standing.rank}
                     </span>
-                    <span className="text-[10px] font-serif italic text-[#d4d4d4]">
+                    <span className="text-[10px] font-serif italic text-ink">
                       {rankSuffix(standing.rank)}
                     </span>
                   </div>
 
                   {/* Name */}
                   <span className="text-white font-medium truncate">{standing.owner}</span>
-                  {/* TODO: show team_name once season standings support it */}
 
                   {/* Per-tournament scores */}
                   {standing.tournamentResults.map((tr) => (
-                    <span
+                    <ScoreCell
                       key={tr.tournamentId}
-                      className="text-center font-mono text-sm"
-                      style={{ color: tr.countingScore !== null ? scoreColor(tr.countingScore) : "#5a5e5a" }}
-                    >
-                      {tr.countingScore !== null ? formatScore(tr.countingScore) : "—"}
-                    </span>
+                      score={tr.countingScore}
+                      className="text-center text-sm"
+                    />
                   ))}
 
                   {/* Total */}
-                  <span
-                    className="text-right font-mono font-bold text-lg"
-                    style={{ color: standing.completedTournaments > 0 ? scoreColor(standing.totalScore) : "#5a5e5a" }}
-                  >
-                    {standing.completedTournaments > 0 ? formatScore(standing.totalScore) : "—"}
-                  </span>
+                  <ScoreCell
+                    score={standing.completedTournaments > 0 ? standing.totalScore : null}
+                    className="text-right font-bold text-lg"
+                  />
                 </div>
               ))}
             </div>

@@ -48,7 +48,7 @@ export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfers
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-[#C8A951] text-black font-semibold text-xs rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Tier Changes"}
           </button>
@@ -62,9 +62,9 @@ export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfers
             .sort((a, b) => a.name.localeCompare(b.name));
 
           return (
-            <div key={tierNum} className="bg-[#111314] rounded-lg border border-[#3a3e3a] overflow-hidden">
-              <div className="px-3 py-2 border-b border-[#3a3e3a] flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
+            <div key={tierNum} className="bg-card-inset rounded-lg border border-edge overflow-hidden">
+              <div className="px-3 py-2 border-b border-edge flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
                   Tier {tierNum}
                 </span>
                 <span className="text-[10px] text-gray-500">{tierGolfers.length} golfers</span>

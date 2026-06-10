@@ -168,25 +168,25 @@ export default function TournamentSettingsPage() {
 
   if (loading || authStatus === "loading") {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-2 border-[#C8A951] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error || !config) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 text-sm">{error || "Tournament not found"}</p>
-          <a href={`/league/${slug}/manage`} className="text-[#C8A951] text-sm mt-4 inline-block">Back</a>
+          <a href={`/league/${slug}/manage`} className="text-brand text-sm mt-4 inline-block">Back</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-surface">
       {/* Save toast */}
       {showSavedToast && (
         <div className="fixed top-4 right-4 z-50 bg-green-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
@@ -197,7 +197,7 @@ export default function TournamentSettingsPage() {
         </div>
       )}
 
-      <header className="bg-[#111314] border-b border-[#2a2e2a] px-4 py-4">
+      <header className="bg-card-inset border-b border-edge px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href={`/league/${slug}/manage`} className="text-gray-400 hover:text-white text-sm cursor-pointer">← Back</a>
@@ -248,24 +248,24 @@ export default function TournamentSettingsPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {!draft && (
-          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-8 text-center">
+          <div className="bg-card rounded-lg border border-edge p-8 text-center">
             <p className="text-gray-400 text-sm">No draft has been created for this tournament yet.</p>
-            <p className="text-gray-500 text-xs mt-1">Go back and use "Fetch Field & Create Draft" to get started.</p>
+            <p className="text-gray-500 text-xs mt-1">Go back and use &quot;Fetch Field &amp; Create Draft&quot; to get started.</p>
           </div>
         )}
 
         {draft && (
           <>
             {/* Close Time Setting */}
-            <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
-              <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-2">
+            <div className="bg-card rounded-lg border border-edge p-4">
+              <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-2">
                 Draft Closes (Date & Time)
               </label>
               <input
                 type="datetime-local"
                 value={closeTimeLocal}
                 onChange={(e) => setCloseTimeLocal(e.target.value)}
-                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#C8A951]"
+                className="w-full bg-card-inset border border-edge rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-brand"
                 style={{ colorScheme: "dark" }}
               />
               {config.firstTeeTime && (
@@ -277,7 +277,7 @@ export default function TournamentSettingsPage() {
 
             {/* Tier Editor */}
             {golfers.length > 0 && (
-              <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
+              <div className="bg-card rounded-lg border border-edge p-4">
                 <TierEditor
                   initialGolfers={golfers.map((g) => ({ name: g.name, espn_id: g.espn_id, tier_number: g.tier_number }))}
                   numTiers={8}
@@ -292,7 +292,7 @@ export default function TournamentSettingsPage() {
             <button
               onClick={saveAll}
               disabled={saving}
-              className="w-full py-4 bg-[#C8A951] text-black font-semibold text-sm rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full py-4 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save All Changes"}
             </button>

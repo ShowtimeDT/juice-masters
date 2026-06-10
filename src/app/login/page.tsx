@@ -18,8 +18,8 @@ export default function LoginPage() {
   if (status === "authenticated") return null;
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-      <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-8 w-full max-w-sm mx-4">
+    <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="bg-card rounded-lg border border-edge p-8 w-full max-w-sm mx-4">
         <AuthForm callbackUrl="/" />
       </div>
     </div>

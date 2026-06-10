@@ -95,18 +95,18 @@ export default function ManageLeaguePage() {
 
   if (loading || authStatus === "loading") {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-2 border-[#C8A951] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 text-sm">{error}</p>
-          <a href={`/league/${slug}`} className="text-[#C8A951] text-sm mt-4 inline-block">Back to league</a>
+          <a href={`/league/${slug}`} className="text-brand text-sm mt-4 inline-block">Back to league</a>
         </div>
       </div>
     );
@@ -115,8 +115,8 @@ export default function ManageLeaguePage() {
   if (!leagueData) return null;
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
-      <header className="bg-[#111314] border-b border-[#2a2e2a] px-4 py-4">
+    <div className="min-h-screen bg-surface">
+      <header className="bg-card-inset border-b border-edge px-4 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a href={`/league/${slug}`} className="text-gray-400 hover:text-white text-sm">← Back</a>
@@ -127,15 +127,15 @@ export default function ManageLeaguePage() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         {/* Invite Link */}
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
+        <div className="bg-card rounded-lg border border-edge p-4">
           <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-3">Invite Link</h2>
           <div className="flex gap-2 items-center">
-            <code className="flex-1 bg-[#111314] border border-[#3a3e3a] rounded-lg px-3 py-2 text-[#C8A951] text-xs font-mono overflow-x-auto">
+            <code className="flex-1 bg-card-inset border border-edge rounded-lg px-3 py-2 text-brand text-xs font-mono overflow-x-auto">
               {typeof window !== "undefined" ? `${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}` : ""}
             </code>
             <button
               onClick={() => navigator.clipboard.writeText(`${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}`)}
-              className="px-3 py-2 bg-[#C8A951] text-black font-semibold text-xs rounded-lg hover:bg-[#d4b96a] transition-colors cursor-pointer shrink-0"
+              className="px-3 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer shrink-0"
             >
               Copy
             </button>
@@ -156,7 +156,7 @@ export default function ManageLeaguePage() {
             return (
               <div
                 key={config.id}
-                className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4"
+                className="bg-card rounded-lg border border-edge p-4"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -187,7 +187,7 @@ export default function ManageLeaguePage() {
                     {hasDraft && (
                       <a
                         href={`/league/${slug}/manage/${config.id}`}
-                        className="px-4 py-2 text-xs font-medium rounded-lg bg-[#111314] border border-[#3a3e3a] text-gray-300 hover:text-white hover:border-[#C8A951] transition-colors"
+                        className="px-4 py-2 text-xs font-medium rounded-lg bg-card-inset border border-edge text-gray-300 hover:text-white hover:border-brand transition-colors"
                       >
                         Settings
                       </a>

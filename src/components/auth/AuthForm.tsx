@@ -70,7 +70,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
         {isSignup && (
           <>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+              <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-1.5">
                 Full Name
               </label>
               <input
@@ -79,12 +79,12 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your full name"
                 required={isSignup}
-                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+                className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition-colors"
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+              <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-1.5">
                 Username
               </label>
               <input
@@ -94,7 +94,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
                 placeholder="Choose a username"
                 required={isSignup}
                 minLength={3}
-                className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+                className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition-colors"
               />
               <p className="text-gray-600 text-[10px] mt-1">Letters, numbers, and underscores only</p>
             </div>
@@ -102,7 +102,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
         )}
 
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+          <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-1.5">
             Email
           </label>
           <input
@@ -111,12 +111,12 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
             required
-            className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+            className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition-colors"
           />
         </div>
 
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1.5">
+          <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-1.5">
             Password
           </label>
           <input
@@ -126,7 +126,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
             placeholder={isSignup ? "At least 6 characters" : "Your password"}
             required
             minLength={isSignup ? 6 : undefined}
-            className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A951] transition-colors"
+            className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition-colors"
           />
         </div>
 
@@ -135,7 +135,7 @@ export default function AuthForm({ onSuccess, callbackUrl = "/" }: AuthFormProps
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-[#C8A951] text-black font-semibold text-sm rounded-lg hover:bg-[#d4b96a] transition-colors disabled:opacity-50 cursor-pointer"
+          className="w-full py-3 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Please wait..." : isSignup ? "Create Account" : "Sign In"}
         </button>

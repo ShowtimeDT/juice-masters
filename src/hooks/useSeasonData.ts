@@ -49,7 +49,7 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
           const entries: Entry[] = await entriesRes.json();
           if (entries.length === 0) continue;
 
-          const espnData: TournamentData = await fetchTournamentData(t.espnDatesParam);
+          const espnData: TournamentData = await fetchTournamentData(t.id);
           birdies += espnData.totalBirdies;
 
           const standings = calculateStandings(entries, espnData);

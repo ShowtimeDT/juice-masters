@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { DraftData } from "@/lib/draft/types";
 import { TournamentConfig } from "@/lib/tournaments";
-import { useTheme } from "@/lib/ThemeContext";
 import TierCard from "./TierCard";
 
 interface DraftPickViewProps {
@@ -52,7 +51,6 @@ export default function DraftPickView({
   config,
   onPicksSubmitted,
 }: DraftPickViewProps) {
-  const theme = useTheme();
   const { data: session } = useSession();
   const { draft, tiers, golfers, picks, members } = draftData;
   const pickCounts = draftData.pickCounts || [];
@@ -161,15 +159,15 @@ export default function DraftPickView({
       {isOpen && deadlineInfo.deadlineStr && (
         <div
           className="rounded-lg px-4 py-3 text-center"
-          style={{ backgroundColor: theme.highlightBg }}
+          style={{ backgroundColor: config.theme.highlightBg }}
         >
-          <p className="text-sm font-medium" style={{ color: theme.badgeText }}>
+          <p className="text-sm font-medium" style={{ color: config.theme.badgeText }}>
             Picks lock automatically 15 minutes before the first tee time
           </p>
           <p className="text-xs mt-1 text-gray-400">
             Deadline: <span className="text-white font-medium">{deadlineInfo.deadlineStr}</span>
             {deadlineInfo.timeLeft && (
-              <span className="ml-2" style={{ color: theme.badgeText }}>({deadlineInfo.timeLeft} remaining)</span>
+              <span className="ml-2" style={{ color: config.theme.badgeText }}>({deadlineInfo.timeLeft} remaining)</span>
             )}
           </p>
         </div>
@@ -179,16 +177,16 @@ export default function DraftPickView({
       {isClosed && (
         <div
           className="rounded-lg px-4 py-3 text-sm text-center font-medium"
-          style={{ backgroundColor: theme.highlightBg, color: theme.badgeText }}
+          style={{ backgroundColor: config.theme.highlightBg, color: config.theme.badgeText }}
         >
           {draft.status === "locked" ? "Draft is locked — picks are final" : "Draft is closed — no more changes"}
         </div>
       )}
 
       {/* User identity card (replaces name dropdown) */}
-      <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4 flex items-center justify-between">
+      <div className="bg-card rounded-lg border border-edge p-4 flex items-center justify-between">
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-1">
+          <span className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-1">
             Picking as
           </span>
           <span className="text-white font-semibold text-sm">{currentUserName}</span>
@@ -203,7 +201,7 @@ export default function DraftPickView({
           {submitted && (
             <span
               className="text-[10px] font-bold uppercase px-2 py-1 rounded ml-2"
-              style={{ backgroundColor: `${theme.primary}30`, color: theme.badgeText }}
+              style={{ backgroundColor: `${config.theme.primary}30`, color: config.theme.badgeText }}
             >
               Submitted
             </span>
@@ -212,7 +210,7 @@ export default function DraftPickView({
       </div>
 
       {!isDraftMember && (
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-6 text-center">
+        <div className="bg-card rounded-lg border border-edge p-6 text-center">
           <p className="text-gray-400 text-sm">You are not a member of this draft. Contact the league commissioner to be added.</p>
         </div>
       )}
@@ -221,7 +219,7 @@ export default function DraftPickView({
       {isDraftMember && (
         <>
           <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
+            <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
               {Object.values(selections).filter(Boolean).length} / {tiers.length} tiers selected
             </span>
           </div>
@@ -237,13 +235,14 @@ export default function DraftPickView({
                 selectedGolfer={selections[tier.tier_number] || null}
                 onSelect={(name) => handleSelect(tier.tier_number, name)}
                 disabled={isClosed}
+                theme={config.theme}
               />
             );
           })}
 
           {/* Tiebreaker */}
-          <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-4">
-            <label className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold block mb-2">
+          <div className="bg-card rounded-lg border border-edge p-4">
+            <label className="text-[10px] uppercase tracking-wider text-faint font-semibold block mb-2">
               Tiebreaker — Total Birdies Guess
             </label>
             <input
@@ -252,8 +251,8 @@ export default function DraftPickView({
               onChange={(e) => { setTiebreaker(e.target.value); setSubmitted(false); }}
               placeholder="Enter your guess for total birdies"
               disabled={isClosed}
-              className="w-full bg-[#111314] border border-[#3a3e3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none transition-colors disabled:opacity-50"
-              style={{ borderColor: tiebreaker ? theme.accent : "#3a3e3a" }}
+              className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none transition-colors disabled:opacity-50"
+              style={{ borderColor: tiebreaker ? config.theme.accent : "var(--color-edge)" }}
             />
           </div>
 
@@ -265,7 +264,7 @@ export default function DraftPickView({
                 onClick={handleSubmit}
                 disabled={!canSubmit || submitting}
                 className="w-full py-4 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
-                style={{ backgroundColor: theme.primary }}
+                style={{ backgroundColor: config.theme.primary }}
               >
                 {submitting ? "Submitting..." : submitted ? "Update Picks" : "Submit Picks"}
               </button>

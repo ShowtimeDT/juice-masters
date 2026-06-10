@@ -1,7 +1,7 @@
 "use client";
 
 import { DraftGolfer } from "@/lib/draft/types";
-import { useTheme } from "@/lib/ThemeContext";
+import { TournamentTheme } from "@/lib/tournaments";
 
 interface TierCardProps {
   tierName: string;
@@ -10,6 +10,7 @@ interface TierCardProps {
   selectedGolfer: string | null;
   onSelect: (name: string) => void;
   disabled: boolean;
+  theme: TournamentTheme;
 }
 
 export default function TierCard({
@@ -19,14 +20,13 @@ export default function TierCard({
   selectedGolfer,
   onSelect,
   disabled,
+  theme,
 }: TierCardProps) {
-  const theme = useTheme();
-
   return (
-    <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+    <div className="bg-card rounded-lg border border-edge overflow-hidden">
       {/* Tier header */}
-      <div className="px-4 py-2.5 border-b border-[#3a3e3a] flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold">
+      <div className="px-4 py-2.5 border-b border-edge flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
           {tierName}
         </span>
         <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: theme.accentMuted }}>

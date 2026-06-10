@@ -1,17 +1,16 @@
 import { EntryStanding } from "@/lib/types";
-import { useTheme } from "@/lib/ThemeContext";
 
 interface TiebreakerPanelProps {
   standings: EntryStanding[];
   actualBirdies: number;
+  accentColor: string;
 }
 
 export default function TiebreakerPanel({
   standings,
   actualBirdies,
+  accentColor,
 }: TiebreakerPanelProps) {
-  const theme = useTheme();
-
   const sorted = [...standings].sort((a, b) => {
     const diffA = Math.abs(a.entry.tiebreakerGuess - actualBirdies);
     const diffB = Math.abs(b.entry.tiebreakerGuess - actualBirdies);
@@ -19,9 +18,9 @@ export default function TiebreakerPanel({
   });
 
   return (
-    <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] overflow-hidden">
+    <div className="bg-card rounded-lg border border-edge overflow-hidden">
       {/* Header */}
-      <div className="px-3 sm:px-4 py-3 border-b border-[#3a3e3a] flex items-center justify-between">
+      <div className="px-3 sm:px-4 py-3 border-b border-edge flex items-center justify-between">
         <h2 className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
           Tiebreaker: Total Birdies
         </h2>
@@ -34,7 +33,7 @@ export default function TiebreakerPanel({
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-[#5a5e5a] font-semibold border-b border-[#3a3e3a]">
+      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-faint font-semibold border-b border-edge">
         <span>Player</span>
         <span className="text-right">Guess</span>
         <span className="text-right">Differential</span>
@@ -49,8 +48,12 @@ export default function TiebreakerPanel({
           return (
             <div
               key={standing.entry.id}
-              className={`grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] items-center px-3 sm:px-4 py-2.5 text-sm border-b border-white/5 last:border-0`}
-              style={isClosest ? { backgroundColor: theme.highlightBg } : undefined}
+              className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] items-center px-3 sm:px-4 py-2.5 text-sm border-b border-white/5 last:border-0"
+              style={
+                isClosest
+                  ? { backgroundColor: `${accentColor}26` }
+                  : undefined
+              }
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`${isClosest ? "text-white font-medium" : "text-gray-400"} truncate`}>
@@ -59,7 +62,10 @@ export default function TiebreakerPanel({
                 {isClosest && (
                   <span
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
-                    style={{ backgroundColor: `${theme.primary}30`, color: theme.badgeText }}
+                    style={{
+                      backgroundColor: `${accentColor}4d`,
+                      color: accentColor,
+                    }}
                   >
                     CLOSEST
                   </span>

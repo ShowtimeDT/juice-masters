@@ -20,7 +20,7 @@ export async function GET(
     `;
 
     // Get league members for team names
-    let teamNames = new Map<string, { team_name: string; display_name: string }>();
+    const teamNames = new Map<string, { team_name: string; display_name: string }>();
     if (draft.league_id) {
       const members = await sql`
         SELECT display_name, team_name FROM league_members WHERE league_id = ${draft.league_id}

@@ -1,7 +1,6 @@
 "use client";
 
 import { TournamentConfig } from "@/lib/tournaments";
-import { useTheme } from "@/lib/ThemeContext";
 
 interface TournamentPlaceholderProps {
   config: TournamentConfig;
@@ -36,30 +35,29 @@ function getTournamentState(config: TournamentConfig): TournamentState {
 }
 
 export default function TournamentPlaceholder({ config }: TournamentPlaceholderProps) {
-  const theme = useTheme();
-  const state = getTournamentState(config);
+    const state = getTournamentState(config);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-center px-6 max-w-md">
         <h2
           className="text-3xl sm:text-4xl font-serif font-bold uppercase tracking-wide mb-3"
-          style={{ color: theme.accent }}
+          style={{ color: config.theme.accent }}
         >
           {config.name}
         </h2>
         <p className="text-gray-300 text-lg mb-1">{config.dates}</p>
         <p className="text-gray-500 text-sm mb-8">{config.venue}</p>
 
-        <div className="bg-[#1e2124] rounded-lg border border-[#3a3e3a] p-6">
+        <div className="bg-card rounded-lg border border-edge p-6">
           {state === "in-progress" && (
             <>
-              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: theme.highlightBg }}>
-                <svg className="w-6 h-6" style={{ color: theme.badgeText }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: config.theme.highlightBg }}>
+                <svg className="w-6 h-6" style={{ color: config.theme.badgeText }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <p className="text-sm font-medium" style={{ color: theme.badgeText }}>
+              <p className="text-sm font-medium" style={{ color: config.theme.badgeText }}>
                 Tournament In Progress
               </p>
               <p className="text-gray-500 text-xs mt-2">
@@ -71,8 +69,8 @@ export default function TournamentPlaceholder({ config }: TournamentPlaceholderP
 
           {state === "completed" && (
             <>
-              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: theme.highlightBg }}>
-                <svg className="w-6 h-6" style={{ color: theme.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: config.theme.highlightBg }}>
+                <svg className="w-6 h-6" style={{ color: config.theme.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -87,8 +85,8 @@ export default function TournamentPlaceholder({ config }: TournamentPlaceholderP
 
           {state === "upcoming" && (
             <>
-              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: theme.highlightBg }}>
-                <svg className="w-6 h-6" style={{ color: theme.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: config.theme.highlightBg }}>
+                <svg className="w-6 h-6" style={{ color: config.theme.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>

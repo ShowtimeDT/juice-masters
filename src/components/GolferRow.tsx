@@ -1,19 +1,8 @@
 import { GolferScoreWithCounting } from "@/lib/types";
+import { formatScore, scoreColor, golferShortName } from "@/lib/format";
 
 interface GolferRowProps {
   golfer: GolferScoreWithCounting;
-}
-
-function scoreColor(score: number): string {
-  if (score < 0) return "text-[#4ade80]";
-  if (score > 0) return "text-[#f87171]";
-  return "text-gray-300";
-}
-
-function formatScore(score: number): string {
-  if (score === 0) return "E";
-  if (score > 0) return `+${score}`;
-  return score.toString();
 }
 
 export default function GolferRow({ golfer }: GolferRowProps) {
@@ -29,7 +18,7 @@ export default function GolferRow({ golfer }: GolferRowProps) {
       {/* Name + cut badge */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-gray-200 text-xs sm:text-sm whitespace-nowrap">
-          <span className="sm:hidden">{golfer.name.split(" ")[0][0]}. {golfer.name.split(" ").slice(1).join(" ")}</span>
+          <span className="sm:hidden">{golferShortName(golfer.name)}</span>
           <span className="hidden sm:inline">{golfer.name}</span>
         </span>
         {golfer.missedCut && (
@@ -48,14 +37,11 @@ export default function GolferRow({ golfer }: GolferRowProps) {
       <span></span>
 
       {/* R1 - R4 scores (always show all 4) */}
-      {[0, 1, 2, 3].map((i) => {
-        const round = golfer.rounds[i];
-        return (
-          <span key={i} className="text-center text-xs text-gray-400 font-mono">
-            {round?.score || "-"}
-          </span>
-        );
-      })}
+      {[0, 1, 2, 3].map((i) => (
+        <span key={i} className="text-center text-xs text-gray-400 font-mono">
+          {golfer.rounds[i]?.score || "-"}
+        </span>
+      ))}
 
       {/* Thru */}
       <span className="text-center text-xs text-gray-500">{golfer.thru}</span>
