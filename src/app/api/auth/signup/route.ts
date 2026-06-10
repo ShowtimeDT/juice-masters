@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 
-const BCRYPT_ROUNDS = 10;
+const BCRYPT_ROUNDS = 12;
 
 function validateSignup(body: {
   email?: string;
@@ -12,8 +12,11 @@ function validateSignup(body: {
 }): string | null {
   const { email, name, username, password } = body;
   if (!email || !name || !username || !password) return "All fields are required";
-  if (password.length < 6) return "Password must be at least 6 characters";
+  if (password.length < 8) return "Password must be at least 8 characters";
+  if (password.length > 200) return "Password is too long";
+  if (name.length > 120) return "Name is too long";
   if (username.length < 3) return "Username must be at least 3 characters";
+  if (username.length > 30) return "Username is too long";
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
     return "Username can only contain letters, numbers, and underscores";
   }

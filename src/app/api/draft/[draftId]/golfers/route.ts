@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requireDraftCommissioner, authzError } from "@/lib/authz";
+import { LIMITS, withinSize, cleanName } from "@/lib/validate";
 
 export async function POST(
   request: NextRequest,
@@ -23,8 +24,13 @@ export async function POST(
     const { golfers } = (await request.json()) as {
       golfers: { tier_number: number; name: string; espn_id?: string }[];
     };
-    if (!Array.isArray(golfers)) {
-      return NextResponse.json({ error: "golfers must be an array" }, { status: 400 });
+    if (!withinSize(golfers, LIMITS.maxGolfers)) {
+      return NextResponse.json({ error: "Too many golfers" }, { status: 400 });
+    }
+    for (const g of golfers) {
+      if (!Number.isInteger(g.tier_number) || cleanName(g.name) === null) {
+        return NextResponse.json({ error: "Invalid golfer" }, { status: 400 });
+      }
     }
 
     await sql.transaction([
@@ -32,7 +38,7 @@ export async function POST(
       ...golfers.map(
         (g) => sql`
           INSERT INTO draft_golfers (draft_id, tier_number, name, espn_id)
-          VALUES (${draftId}, ${g.tier_number}, ${g.name}, ${g.espn_id || ""})
+          VALUES (${draftId}, ${g.tier_number}, ${cleanName(g.name)}, ${String(g.espn_id || "").slice(0, 32)})
         `
       ),
     ]);

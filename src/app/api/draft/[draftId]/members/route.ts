@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requireDraftCommissioner, authzError } from "@/lib/authz";
+import { LIMITS, withinSize, cleanName } from "@/lib/validate";
 
 export async function POST(
   request: NextRequest,
@@ -14,13 +15,17 @@ export async function POST(
     if (!authz.ok) return authzError(authz);
 
     const { members } = (await request.json()) as { members: string[] };
-    if (!Array.isArray(members)) {
-      return NextResponse.json({ error: "members must be an array" }, { status: 400 });
+    if (!withinSize(members, LIMITS.maxMembers)) {
+      return NextResponse.json({ error: "Too many members" }, { status: 400 });
+    }
+    const cleaned = members.map(cleanName);
+    if (cleaned.some((name) => name === null)) {
+      return NextResponse.json({ error: "Invalid member name" }, { status: 400 });
     }
 
     await sql.transaction([
       sql`DELETE FROM draft_members WHERE draft_id = ${draftId}`,
-      ...members.map(
+      ...cleaned.map(
         (name) => sql`
           INSERT INTO draft_members (draft_id, name)
           VALUES (${draftId}, ${name})

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { requireUser, authzError } from "@/lib/authz";
+import { cleanName } from "@/lib/validate";
 
 function generateSlug(name: string): string {
   return name
@@ -25,9 +26,10 @@ export async function POST(request: NextRequest) {
   const sql = getDb();
 
   try {
-    const { name } = await request.json();
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "League name is required" }, { status: 400 });
+    const { name: rawName } = await request.json();
+    const name = cleanName(rawName);
+    if (name === null) {
+      return NextResponse.json({ error: "League name is required (max 120 chars)" }, { status: 400 });
     }
 
     const baseSlug = generateSlug(name) || "league";
@@ -38,13 +40,13 @@ export async function POST(request: NextRequest) {
     try {
       [league] = await sql`
         INSERT INTO leagues (name, slug, commissioner_id, invite_code)
-        VALUES (${name.trim()}, ${baseSlug}, ${user.userId}, ${inviteCode})
+        VALUES (${name}, ${baseSlug}, ${user.userId}, ${inviteCode})
         RETURNING *
       `;
     } catch {
       [league] = await sql`
         INSERT INTO leagues (name, slug, commissioner_id, invite_code)
-        VALUES (${name.trim()}, ${`${baseSlug}-${randomSuffix()}`}, ${user.userId}, ${inviteCode})
+        VALUES (${name}, ${`${baseSlug}-${randomSuffix()}`}, ${user.userId}, ${inviteCode})
         RETURNING *
       `;
     }
