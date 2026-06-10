@@ -101,6 +101,30 @@ export default function ManageLeaguePage() {
     }
   };
 
+  const deleteLeague = async () => {
+    if (!leagueData) return;
+    const typed = prompt(
+      `This permanently deletes "${leagueData.league.name}" — all drafts, picks, and standings. ` +
+        `Type the league name to confirm:`
+    );
+    if (typed === null) return;
+    if (typed.trim() !== leagueData.league.name) {
+      alert("Name didn't match — nothing was deleted.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/leagues/${leagueData.league.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to delete league");
+        return;
+      }
+      router.replace("/");
+    } catch {
+      alert("Failed to delete league");
+    }
+  };
+
   const fetchField = async (tournamentId: string) => {
     if (!leagueData) return;
     setFetching(tournamentId);
@@ -273,6 +297,23 @@ export default function ManageLeaguePage() {
               </div>
             );
           })}
+        </div>
+
+        {/* Danger zone */}
+        <div className="bg-card rounded-lg border border-red-500/30 p-4">
+          <h2 className="text-red-400 font-bold text-sm uppercase tracking-wide mb-1">Danger Zone</h2>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-gray-500 text-xs">
+              Permanently delete this league, including all drafts, picks, and standings.
+              This cannot be undone.
+            </p>
+            <button
+              onClick={deleteLeague}
+              className="px-4 py-2 bg-red-500/10 border border-red-500/40 text-red-400 font-semibold text-xs rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer shrink-0"
+            >
+              Delete League
+            </button>
+          </div>
         </div>
       </main>
     </div>
