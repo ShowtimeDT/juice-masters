@@ -128,8 +128,8 @@ export default function DraftPickView({
       const res = await fetch(`/api/draft/${draft.id}/pick`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // Identity is derived server-side from the session.
         body: JSON.stringify({
-          owner: currentUserName,
           picks: picksPayload,
           tiebreaker_guess: parseInt(tiebreaker),
         }),

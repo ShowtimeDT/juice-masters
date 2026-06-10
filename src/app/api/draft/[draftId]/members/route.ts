@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { requireDraftCommissioner, authzError } from "@/lib/authz";
 
 export async function POST(
   request: NextRequest,
@@ -9,16 +10,23 @@ export async function POST(
   const sql = getDb();
 
   try {
-    const { members } = await request.json();
+    const authz = await requireDraftCommissioner(draftId);
+    if (!authz.ok) return authzError(authz);
 
-    await sql`DELETE FROM draft_members WHERE draft_id = ${draftId}`;
-
-    for (const name of members) {
-      await sql`
-        INSERT INTO draft_members (draft_id, name)
-        VALUES (${draftId}, ${name})
-      `;
+    const { members } = (await request.json()) as { members: string[] };
+    if (!Array.isArray(members)) {
+      return NextResponse.json({ error: "members must be an array" }, { status: 400 });
     }
+
+    await sql.transaction([
+      sql`DELETE FROM draft_members WHERE draft_id = ${draftId}`,
+      ...members.map(
+        (name) => sql`
+          INSERT INTO draft_members (draft_id, name)
+          VALUES (${draftId}, ${name})
+        `
+      ),
+    ]);
 
     const result = await sql`
       SELECT * FROM draft_members WHERE draft_id = ${draftId} ORDER BY name

@@ -147,7 +147,7 @@ export default function TournamentSettingsPage() {
     if (draft.status !== "open") {
       await fetch(`/api/draft/${draft.id}/status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": "commissioner" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "open" }),
       });
     }
@@ -160,7 +160,7 @@ export default function TournamentSettingsPage() {
     if (!draft) return;
     await fetch(`/api/draft/${draft.id}/status`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-password": "commissioner" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
     fetchData();

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { TOURNAMENTS } from "@/lib/tournaments";
-
-const LOCK_MINUTES_BEFORE = 15;
+import { auth } from "@/lib/auth";
+import { isPastDeadline } from "@/lib/draft/deadline";
 
 export async function GET(
   request: NextRequest,
@@ -37,24 +36,10 @@ export async function GET(
       return NextResponse.json(null);
     }
 
-    // Check if draft should auto-lock based on close_time or firstTeeTime fallback
-    if (draft.status === "open") {
-      let deadline: Date | null = null;
-
-      if (draft.close_time) {
-        deadline = new Date(draft.close_time as string);
-      } else {
-        const tournament = TOURNAMENTS.find((t) => t.id === tournamentId);
-        if (tournament?.firstTeeTime) {
-          deadline = new Date(tournament.firstTeeTime);
-          deadline.setMinutes(deadline.getMinutes() - LOCK_MINUTES_BEFORE);
-        }
-      }
-
-      if (deadline && new Date() >= deadline) {
-        await sql`UPDATE drafts SET status = 'locked' WHERE id = ${draftId}`;
-        draft.status = "locked";
-      }
+    // Auto-lock when the deadline (close_time, else tee-time) has passed.
+    if (draft.status === "open" && isPastDeadline(draft)) {
+      await sql`UPDATE drafts SET status = 'locked' WHERE id = ${draftId}`;
+      draft.status = "locked";
     }
 
     const tiers = await sql`
@@ -67,17 +52,19 @@ export async function GET(
       SELECT * FROM draft_members WHERE draft_id = ${draftId} ORDER BY name
     `;
 
-    // Only return the requesting user's picks when draft is open/closed
-    const owner = request.nextUrl.searchParams.get("owner");
-    let picks: Record<string, unknown>[];
+    // Before lock, callers only ever see their own picks — identity comes
+    // from the session, never a query param.
+    const session = await auth();
+    const userId = session?.user?.id ?? null;
 
+    let picks: Record<string, unknown>[];
     if (draft.status === "locked") {
       picks = await sql`
         SELECT * FROM draft_picks WHERE draft_id = ${draftId} ORDER BY owner, tier_number
       `;
-    } else if (owner) {
+    } else if (userId) {
       picks = await sql`
-        SELECT * FROM draft_picks WHERE draft_id = ${draftId} AND owner = ${owner} ORDER BY tier_number
+        SELECT * FROM draft_picks WHERE draft_id = ${draftId} AND user_id = ${userId} ORDER BY tier_number
       `;
     } else {
       picks = [];

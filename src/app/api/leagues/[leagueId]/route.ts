@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { isLeagueMemberOrCommissioner } from "@/lib/authz";
 
 export async function GET(
   _request: NextRequest,
@@ -17,12 +18,20 @@ export async function GET(
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
 
+    // No emails; LEFT JOIN so unclaimed historical members still appear.
     const members = await sql`
-      SELECT lm.*, u.email, u.username FROM league_members lm
-      JOIN users u ON u.id = lm.user_id
+      SELECT lm.id, lm.league_id, lm.user_id, lm.display_name, lm.team_name,
+             lm.joined_at, u.username
+      FROM league_members lm
+      LEFT JOIN users u ON u.id = lm.user_id
       WHERE lm.league_id = ${league.id}
       ORDER BY lm.joined_at
     `;
+
+    // The invite code is for members to share — don't hand it to strangers.
+    if (!(await isLeagueMemberOrCommissioner(league.id as string))) {
+      delete league.invite_code;
+    }
 
     return NextResponse.json({ league, members });
   } catch (error) {

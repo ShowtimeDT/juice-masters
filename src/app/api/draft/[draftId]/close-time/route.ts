@@ -1,31 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { requireDraftCommissioner, authzError } from "@/lib/authz";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ draftId: string }> }
 ) {
   const { draftId } = await params;
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
   const sql = getDb();
 
   try {
-    // Verify commissioner
-    const [draft] = await sql`SELECT * FROM drafts WHERE id = ${draftId}`;
-    if (!draft?.league_id) {
-      return NextResponse.json({ error: "Draft not found" }, { status: 404 });
-    }
-    const [league] = await sql`SELECT commissioner_id FROM leagues WHERE id = ${draft.league_id}`;
-    if (league?.commissioner_id !== session.user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    const authz = await requireDraftCommissioner(draftId);
+    if (!authz.ok) return authzError(authz);
 
     const { close_time } = await request.json();
+
+    // null clears the close time; anything else must be a valid timestamp.
+    if (close_time !== null && Number.isNaN(Date.parse(close_time))) {
+      return NextResponse.json({ error: "Invalid close time" }, { status: 400 });
+    }
 
     await sql`UPDATE drafts SET close_time = ${close_time} WHERE id = ${draftId}`;
     const [updated] = await sql`SELECT * FROM drafts WHERE id = ${draftId}`;

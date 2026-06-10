@@ -1,6 +1,7 @@
+import { randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { requireUser, authzError } from "@/lib/authz";
 
 function generateSlug(name: string): string {
   return name
@@ -10,19 +11,16 @@ function generateSlug(name: string): string {
 }
 
 function generateInviteCode(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let code = "";
-  for (let i = 0; i < 8; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+  return randomBytes(6).toString("base64url");
+}
+
+function randomSuffix(): string {
+  return randomBytes(2).toString("hex");
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const user = await requireUser();
+  if (!user.ok) return authzError(user);
 
   const sql = getDb();
 
@@ -32,29 +30,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "League name is required" }, { status: 400 });
     }
 
-    const slug = generateSlug(name);
+    const baseSlug = generateSlug(name) || "league";
     const inviteCode = generateInviteCode();
 
-    const [league] = await sql`
-      INSERT INTO leagues (name, slug, commissioner_id, invite_code)
-      VALUES (${name.trim()}, ${slug}, ${session.user.id}, ${inviteCode})
-      RETURNING *
-    `;
+    // On slug collision, retry once with a random suffix instead of failing.
+    let league;
+    try {
+      [league] = await sql`
+        INSERT INTO leagues (name, slug, commissioner_id, invite_code)
+        VALUES (${name.trim()}, ${baseSlug}, ${user.userId}, ${inviteCode})
+        RETURNING *
+      `;
+    } catch {
+      [league] = await sql`
+        INSERT INTO leagues (name, slug, commissioner_id, invite_code)
+        VALUES (${name.trim()}, ${`${baseSlug}-${randomSuffix()}`}, ${user.userId}, ${inviteCode})
+        RETURNING *
+      `;
+    }
 
-    // Get username for default team name
-    const [user] = await sql`SELECT username, name FROM users WHERE id = ${session.user.id}`;
-    const displayName = user?.name || session.user.name || "Unknown";
-    const defaultTeamName = `${user?.username || displayName}'s Team`;
-
-    // Auto-add commissioner as a member
+    // Auto-add the commissioner as a member.
+    const [creator] = await sql`SELECT username, name FROM users WHERE id = ${user.userId}`;
+    const displayName = (creator?.name as string) || "Unknown";
+    const defaultTeamName = `${creator?.username || displayName}'s Team`;
     await sql`
       INSERT INTO league_members (league_id, user_id, display_name, team_name)
-      VALUES (${league.id}, ${session.user.id}, ${displayName}, ${defaultTeamName})
+      VALUES (${league.id}, ${user.userId}, ${displayName}, ${defaultTeamName})
     `;
 
     return NextResponse.json(league);
   } catch (error) {
     console.error("Create league error:", error);
-    return NextResponse.json({ error: "Failed to create league. Name or slug may already exist." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create league" }, { status: 500 });
   }
 }

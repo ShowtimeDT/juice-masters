@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { requireDraftCommissioner, authzError } from "@/lib/authz";
 
 export async function POST(
   request: NextRequest,
@@ -9,16 +10,25 @@ export async function POST(
   const sql = getDb();
 
   try {
-    const { tiers } = await request.json();
+    const authz = await requireDraftCommissioner(draftId);
+    if (!authz.ok) return authzError(authz);
 
-    await sql`DELETE FROM draft_tiers WHERE draft_id = ${draftId}`;
-
-    for (const tier of tiers) {
-      await sql`
-        INSERT INTO draft_tiers (draft_id, tier_number, name)
-        VALUES (${draftId}, ${tier.tier_number}, ${tier.name})
-      `;
+    const { tiers } = (await request.json()) as {
+      tiers: { tier_number: number; name: string }[];
+    };
+    if (!Array.isArray(tiers)) {
+      return NextResponse.json({ error: "tiers must be an array" }, { status: 400 });
     }
+
+    await sql.transaction([
+      sql`DELETE FROM draft_tiers WHERE draft_id = ${draftId}`,
+      ...tiers.map(
+        (tier) => sql`
+          INSERT INTO draft_tiers (draft_id, tier_number, name)
+          VALUES (${draftId}, ${tier.tier_number}, ${tier.name})
+        `
+      ),
+    ]);
 
     const result = await sql`
       SELECT * FROM draft_tiers WHERE draft_id = ${draftId} ORDER BY tier_number

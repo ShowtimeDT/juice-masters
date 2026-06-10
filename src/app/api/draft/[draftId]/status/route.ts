@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { requireDraftCommissioner, authzError } from "@/lib/authz";
+
+const VALID_STATUSES = ["pending", "open", "closed", "locked"];
 
 export async function POST(
   request: NextRequest,
@@ -10,31 +12,11 @@ export async function POST(
   const sql = getDb();
 
   try {
-    // Check auth — allow admin password OR authenticated commissioner
-    const adminPassword = request.headers.get("x-admin-password");
-    const session = await auth();
-
-    let authorized = false;
-
-    if (adminPassword === process.env.ADMIN_PASSWORD) {
-      authorized = true;
-    } else if (session?.user?.id) {
-      // Check if user is commissioner of the league this draft belongs to
-      const [draft] = await sql`SELECT league_id FROM drafts WHERE id = ${draftId}`;
-      if (draft?.league_id) {
-        const [league] = await sql`SELECT commissioner_id FROM leagues WHERE id = ${draft.league_id}`;
-        if (league?.commissioner_id === session.user.id) {
-          authorized = true;
-        }
-      }
-    }
-
-    if (!authorized) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authz = await requireDraftCommissioner(draftId);
+    if (!authz.ok) return authzError(authz);
 
     const { status } = await request.json();
-    if (!["pending", "open", "closed", "locked"].includes(status)) {
+    if (!VALID_STATUSES.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 

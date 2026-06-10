@@ -15,10 +15,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         const sql = getDb();
-        const email = credentials.email as string;
+        const email = (credentials.email as string).trim().toLowerCase();
         const password = credentials.password as string;
 
-        const [user] = await sql`SELECT * FROM users WHERE email = ${email}`;
+        const [user] = await sql`SELECT * FROM users WHERE lower(email) = ${email}`;
         if (!user) return null;
 
         const [pw] = await sql`SELECT password_hash FROM user_passwords WHERE user_id = ${user.id}`;
