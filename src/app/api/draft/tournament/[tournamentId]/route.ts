@@ -48,9 +48,20 @@ export async function GET(
     const golfers = await sql`
       SELECT * FROM draft_golfers WHERE draft_id = ${draftId} ORDER BY tier_number, name
     `;
-    const members = await sql`
-      SELECT * FROM draft_members WHERE draft_id = ${draftId} ORDER BY name
-    `;
+    // Draft membership follows league membership, so people who join the
+    // league after the draft was created can still pick. draft_members is
+    // only the fallback for old drafts that predate leagues.
+    let members;
+    if (draft.league_id) {
+      members = await sql`
+        SELECT display_name AS name, user_id FROM league_members
+        WHERE league_id = ${draft.league_id} ORDER BY display_name
+      `;
+    } else {
+      members = await sql`
+        SELECT * FROM draft_members WHERE draft_id = ${draftId} ORDER BY name
+      `;
+    }
 
     // Before lock, callers only ever see their own picks — identity comes
     // from the session, never a query param.
