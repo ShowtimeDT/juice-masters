@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import AuthForm from "@/components/auth/AuthForm";
+import LandingPage from "@/components/marketing/LandingPage";
 
 interface League {
   id: string;
@@ -22,6 +22,16 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
+  const joinInputRef = useRef<HTMLInputElement>(null);
+
+  // Landing-page CTAs route here after sign-in with ?create=1 / ?join=1.
+  // (window.location avoids the useSearchParams Suspense requirement.)
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") === "1") setShowCreate(true);
+    if (params.get("join") === "1") joinInputRef.current?.focus();
+  }, [status, loading]);
 
   const fetchLeagues = async () => {
     try {
@@ -91,25 +101,9 @@ export default function Home() {
     );
   }
 
-  // Not logged in — show landing with auth
+  // Not logged in — show the marketing landing page
   if (!session) {
-    return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="w-full max-w-sm mx-4">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-serif font-bold text-white uppercase tracking-[0.18em]">
-              Juice Tour
-            </h1>
-            <p className="text-gray-500 text-xs mt-2 uppercase tracking-[0.35em]">
-              Pick &apos;Em Golf Majors League
-            </p>
-          </div>
-          <div className="bg-card rounded-lg border border-edge p-8">
-            <AuthForm callbackUrl="/" />
-          </div>
-        </div>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   // Logged in — show league selection
@@ -164,6 +158,7 @@ export default function Home() {
           <h3 className="text-white font-semibold text-sm mb-3">Join a League</h3>
           <div className="flex gap-2">
             <input
+              ref={joinInputRef}
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
               placeholder="Enter invite code"
