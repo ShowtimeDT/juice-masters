@@ -18,9 +18,16 @@ export interface GolferScore {
   thru: string; // "F", "B9", hole number, etc.
 }
 
+export interface HoleScore {
+  hole: number; // 1-18
+  strokes: string; // "4"
+  toPar: number; // -1 birdie, 0 par, +1 bogey...
+}
+
 export interface RoundScore {
   round: number;
   score: string;
+  holes?: HoleScore[]; // present when ESPN provides hole-by-hole detail
 }
 
 export interface GolferScoreWithCounting extends GolferScore {

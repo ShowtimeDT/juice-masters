@@ -97,9 +97,16 @@ export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) 
               {rankSuffix(rank)}
             </span>
           </div>
-          <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate min-w-0">
-            {entry.name}
-          </h3>
+          <div className="min-w-0">
+            <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
+              {entry.name}
+            </h3>
+            {entry.owner !== entry.name && (
+              <p className="text-gray-500 text-[10px] sm:text-xs leading-tight truncate">
+                {entry.owner}
+              </p>
+            )}
+          </div>
         </div>
 
         <TopFiveStrip golfers={topFive} />

@@ -9,8 +9,12 @@ import AuthForm from "@/components/auth/AuthForm";
 interface MemberSlot {
   id: number;
   display_name: string;
+  team_name: string | null;
   user_id: string | null;
 }
+
+/** The identity the joiner picked: a claimable slot, or brand-new. */
+type Selection = MemberSlot | "new";
 
 function FullScreenCenter({ children }: { children: React.ReactNode }) {
   return (
@@ -28,6 +32,8 @@ export default function JoinLeaguePage() {
   const slug = params.slug as string;
 
   const [unclaimed, setUnclaimed] = useState<MemberSlot[] | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [teamName, setTeamName] = useState("");
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState("");
   const [showAuth, setShowAuth] = useState(false);
@@ -55,10 +61,22 @@ export default function JoinLeaguePage() {
     }
   }, [status, unclaimed, loadMembers]);
 
-  const join = async (claimMemberId?: number) => {
+  const choose = (sel: Selection) => {
+    setSelection(sel);
+    setError("");
+    if (sel === "new") {
+      setTeamName(`${session?.user?.name ?? "My"}'s Team`);
+    } else {
+      setTeamName(sel.team_name || sel.display_name);
+    }
+  };
+
+  const join = async () => {
+    if (!selection) return;
     setJoining(true);
     setError("");
     try {
+      const claimMemberId = selection === "new" ? undefined : selection.id;
       const res = await fetch("/api/leagues/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,9 +87,19 @@ export default function JoinLeaguePage() {
       if (!res.ok) {
         setError(data.error || "Failed to join league");
         setJoining(false);
+        setSelection(null);
         // The slot may have been claimed since the list loaded — refresh it.
         if (res.status === 409) loadMembers();
         return;
+      }
+
+      // Save their chosen team name (best-effort; the default is fine).
+      if (teamName.trim() && data.league?.id) {
+        await fetch("/api/leagues/team-name", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ league_id: data.league.id, team_name: teamName.trim() }),
+        }).catch(() => {});
       }
 
       router.replace(`/league/${slug}`);
@@ -122,7 +150,41 @@ export default function JoinLeaguePage() {
 
         {error && <p className="text-red-400 text-xs text-center mb-4">{error}</p>}
 
-        {unclaimed && unclaimed.length > 0 ? (
+        {selection !== null ? (
+          /* Step 2: name your team, then join */
+          <>
+            <p className="text-gray-400 text-sm mb-1 text-center">
+              {selection === "new"
+                ? `Joining as ${session.user?.name}`
+                : `Claiming ${selection.display_name}`}
+            </p>
+            <p className="text-faint text-[10px] uppercase tracking-wider text-center mb-4">
+              Name your team — you can change it any time
+            </p>
+            <input
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              maxLength={120}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && join()}
+              className="w-full bg-card-inset border border-edge rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand mb-4"
+            />
+            <button
+              onClick={join}
+              disabled={!teamName.trim()}
+              className="w-full py-3 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Join League
+            </button>
+            <button
+              onClick={() => setSelection(null)}
+              className="w-full mt-2 text-gray-500 text-xs hover:text-white transition-colors cursor-pointer"
+            >
+              ← Back
+            </button>
+          </>
+        ) : unclaimed && unclaimed.length > 0 ? (
+          /* Step 1: who are you? */
           <>
             <p className="text-gray-400 text-sm mb-4 text-center">
               Are you one of these existing members? Claim your name to keep your past results.
@@ -131,7 +193,7 @@ export default function JoinLeaguePage() {
               {unclaimed.map((m) => (
                 <button
                   key={m.id}
-                  onClick={() => join(m.id)}
+                  onClick={() => choose(m)}
                   className="w-full px-4 py-2.5 bg-card-inset border border-edge rounded-lg text-gray-200 text-sm text-left hover:border-brand transition-colors cursor-pointer"
                 >
                   {m.display_name}
@@ -139,7 +201,7 @@ export default function JoinLeaguePage() {
               ))}
             </div>
             <button
-              onClick={() => join()}
+              onClick={() => choose("new")}
               className="w-full py-3 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors cursor-pointer"
             >
               No, I&apos;m new — join as {session.user?.name}
@@ -151,10 +213,10 @@ export default function JoinLeaguePage() {
               Join as <span className="text-white">{session.user?.name}</span>?
             </p>
             <button
-              onClick={() => join()}
+              onClick={() => choose("new")}
               className="w-full py-3 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors cursor-pointer"
             >
-              Join League
+              Continue
             </button>
           </>
         )}

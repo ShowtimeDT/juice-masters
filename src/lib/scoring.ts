@@ -4,7 +4,7 @@ import { resolveGolferName } from "./entries/index";
 const CUT_PENALTY = 10;
 const COUNTING_GOLFERS = 5;
 
-function getGolferScore(
+export function getGolferScore(
   golferName: string,
   golferScores: Map<string, GolferScore>
 ): GolferScore {
