@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { canViewLeagueById } from "@/lib/authz";
 import { auth } from "@/lib/auth";
 import { isPastDeadline } from "@/lib/draft/deadline";
 
@@ -14,6 +15,11 @@ export async function GET(
     const [draft] = await sql`SELECT * FROM drafts WHERE id = ${draftId}`;
     if (!draft) {
       return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    }
+
+    // Private leagues hide their drafts from outsiders.
+    if (draft.league_id && !(await canViewLeagueById(draft.league_id as string))) {
+      return NextResponse.json({ error: "This league is private", private: true }, { status: 403 });
     }
 
     // Auto-lock if the deadline has passed.

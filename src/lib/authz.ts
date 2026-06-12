@@ -97,6 +97,34 @@ export async function requireLeagueMember(
   return { ok: true, userId: user.userId, member: member as LeagueMemberRow };
 }
 
+/**
+ * Whether the current caller may VIEW a league's content (standings etc.).
+ * Public leagues: always. Private leagues: members/commissioner, or anyone
+ * presenting the league's invite code (possession of the link = invited).
+ * Chat is members-only separately, regardless of this.
+ */
+export async function canViewLeague(
+  league: { id?: unknown; is_private?: unknown; invite_code?: unknown },
+  inviteCode?: string | null
+): Promise<boolean> {
+  if (!league.is_private) return true;
+  if (inviteCode && league.invite_code && inviteCode === league.invite_code) return true;
+  return isLeagueMemberOrCommissioner(league.id as string);
+}
+
+/** Look up a league by id, then apply canViewLeague. For draft-side reads. */
+export async function canViewLeagueById(
+  leagueId: string,
+  inviteCode?: string | null
+): Promise<boolean> {
+  const sql = getDb();
+  const [league] = await sql`
+    SELECT id, is_private, invite_code FROM leagues WHERE id = ${leagueId}
+  `;
+  if (!league) return false;
+  return canViewLeague(league, inviteCode);
+}
+
 /** True when the caller (if any) is a member or commissioner of the league. */
 export async function isLeagueMemberOrCommissioner(leagueId: string): Promise<boolean> {
   const session = await auth();

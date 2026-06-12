@@ -25,6 +25,19 @@ export function withinSize(value: unknown, max: number): value is unknown[] {
   return Array.isArray(value) && value.length <= max;
 }
 
+/** League passwords: 4–72 chars (bcrypt's effective input limit). */
+export function validLeaguePassword(value: unknown): value is string {
+  return typeof value === "string" && value.length >= 4 && value.length <= 72;
+}
+
+/** Chat messages: trimmed, 1–1000 chars. Returns null if invalid. */
+export function cleanMessage(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > 1000) return null;
+  return trimmed;
+}
+
 /** True when a tiebreaker guess is a sensible whole number. */
 export function validTiebreaker(value: unknown): value is number {
   return (
