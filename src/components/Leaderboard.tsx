@@ -3,11 +3,13 @@
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { getEntriesForTournament } from "@/lib/entries/index";
 import { calculateStandings } from "@/lib/scoring";
+import { nameColumnWidthCh } from "@/lib/format";
 import { getTournament, TournamentId } from "@/lib/tournaments";
 import { Entry } from "@/lib/types";
 import TournamentHeader from "./TournamentHeader";
 import EntryRow from "./EntryRow";
 import TiebreakerPanel from "./TiebreakerPanel";
+import CountingNote from "./CountingNote";
 
 interface LeaderboardProps {
   tournamentId: TournamentId;
@@ -54,6 +56,7 @@ export default function Leaderboard({ tournamentId, entries: entriesProp }: Lead
   }
 
   const standings = calculateStandings(entries, data);
+  const nameWidthCh = nameColumnWidthCh(standings.map((s) => s.entry.name));
 
   return (
     <div className="min-h-screen bg-surface">
@@ -84,8 +87,9 @@ export default function Leaderboard({ tournamentId, entries: entriesProp }: Lead
           </div>
         ) : (
           <>
+            <CountingNote />
             {standings.map((standing) => (
-              <EntryRow key={standing.entry.id} standing={standing} />
+              <EntryRow key={standing.entry.id} standing={standing} nameWidthCh={nameWidthCh} />
             ))}
 
             <div className="pt-4">

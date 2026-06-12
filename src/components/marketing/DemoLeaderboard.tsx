@@ -3,9 +3,12 @@
 import EntryRow from "@/components/EntryRow";
 import TiebreakerPanel from "@/components/TiebreakerPanel";
 import { DEMO_STANDINGS, DEMO_TOTAL_BIRDIES } from "@/lib/demo-data";
+import { nameColumnWidthCh } from "@/lib/format";
+import CountingNote from "@/components/CountingNote";
 import { getTournament } from "@/lib/tournaments";
 
 const accentColor = getTournament("season").theme.accent;
+const nameWidthCh = nameColumnWidthCh(DEMO_STANDINGS.map((s) => s.entry.name));
 
 /** Which app-window framing to render — "panel" or "browser". */
 const FRAME: "panel" | "browser" = "panel";
@@ -95,8 +98,9 @@ export default function DemoLeaderboard() {
 
       <Chrome>
         <div className="p-3 sm:p-5 space-y-4">
+          <CountingNote />
           {DEMO_STANDINGS.map((standing) => (
-            <EntryRow key={standing.entry.id} standing={standing} />
+            <EntryRow key={standing.entry.id} standing={standing} nameWidthCh={nameWidthCh} />
           ))}
 
           <div className="pt-2">
