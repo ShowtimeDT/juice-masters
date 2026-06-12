@@ -14,8 +14,14 @@ const TABS: { id: AppView; label: string }[] = [
 interface AppTabsProps {
   active: AppView;
   onSelect: (view: AppView) => void;
+  /** Pulse a dot on My Team — the member has a live draft to pick in. */
+  teamBadge?: boolean;
   /** Right-docked controls, e.g. the league switcher and account menu. */
   children?: ReactNode;
+}
+
+function BadgeDot() {
+  return <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />;
 }
 
 /**
@@ -23,7 +29,7 @@ interface AppTabsProps {
  * Inline tabs on desktop; a hamburger menu on phones to leave room for
  * the league switcher and account menu.
  */
-export default function AppTabs({ active, onSelect, children }: AppTabsProps) {
+export default function AppTabs({ active, onSelect, teamBadge, children }: AppTabsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useOutsideClick(menuRef, () => setMenuOpen(false), menuOpen);
@@ -49,6 +55,7 @@ export default function AppTabs({ active, onSelect, children }: AppTabsProps) {
                 />
               </svg>
               {activeLabel}
+              {teamBadge && <BadgeDot />}
             </button>
 
             {menuOpen && (
@@ -60,13 +67,14 @@ export default function AppTabs({ active, onSelect, children }: AppTabsProps) {
                       onSelect(tab.id);
                       setMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer first:rounded-t-lg last:rounded-b-lg ${
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer first:rounded-t-lg last:rounded-b-lg flex items-center gap-2 ${
                       tab.id === active
                         ? "text-white bg-white/5"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     {tab.label}
+                    {tab.id === "team" && teamBadge && <BadgeDot />}
                   </button>
                 ))}
               </div>
@@ -81,13 +89,14 @@ export default function AppTabs({ active, onSelect, children }: AppTabsProps) {
                 <button
                   key={tab.id}
                   onClick={() => onSelect(tab.id)}
-                  className={`px-7 py-3.5 text-sm font-semibold tracking-wide transition-colors cursor-pointer border-b-2 ${
+                  className={`px-7 py-3.5 text-sm font-semibold tracking-wide transition-colors cursor-pointer border-b-2 inline-flex items-center gap-1.5 ${
                     isActive
                       ? "text-white border-brand"
                       : "text-gray-500 border-transparent hover:text-gray-300"
                   }`}
                 >
                   {tab.label}
+                  {tab.id === "team" && teamBadge && <BadgeDot />}
                 </button>
               );
             })}

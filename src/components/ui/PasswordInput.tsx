@@ -7,6 +7,8 @@ interface PasswordInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Called when the user presses Enter, e.g. to submit the form. */
+  onEnter?: () => void;
 }
 
 /**
@@ -19,6 +21,7 @@ export default function PasswordInput({
   onChange,
   placeholder,
   disabled,
+  onEnter,
 }: PasswordInputProps) {
   const [revealed, setRevealed] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -32,6 +35,7 @@ export default function PasswordInput({
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        onKeyDown={(e) => e.key === "Enter" && onEnter?.()}
         placeholder={placeholder}
         disabled={disabled}
         maxLength={72}

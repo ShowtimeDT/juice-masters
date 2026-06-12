@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 interface League {
   id: string;
@@ -200,15 +201,14 @@ export default function LeagueHome() {
             </button>
           </div>
           {joinPrivate && (
-            <input
-              type="password"
-              value={joinPassword}
-              onChange={(e) => setJoinPassword(e.target.value)}
-              placeholder="League password"
-              maxLength={72}
-              onKeyDown={(e) => e.key === "Enter" && joinLeague()}
-              className="mt-2 w-full bg-card-inset border border-edge rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={joinPassword}
+                onChange={setJoinPassword}
+                placeholder="League password"
+                onEnter={joinLeague}
+              />
+            </div>
           )}
           <button
             onClick={() => setJoinPrivate(!joinPrivate)}
@@ -261,14 +261,13 @@ export default function LeagueHome() {
               ))}
             </div>
             {createPrivate && (
-              <input
-                type="password"
-                value={createPassword}
-                onChange={(e) => setCreatePassword(e.target.value)}
-                placeholder="League password (members will use this to join)"
-                maxLength={72}
-                className="mt-2 w-full bg-card-inset border border-edge rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand"
-              />
+              <div className="mt-2">
+                <PasswordInput
+                  value={createPassword}
+                  onChange={setCreatePassword}
+                  placeholder="League password (members will use this to join)"
+                />
+              </div>
             )}
             {createError && <p className="text-red-400 text-xs mt-2">{createError}</p>}
           </div>

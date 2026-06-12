@@ -154,7 +154,8 @@ export default function DraftPickView({
   const totalMembers = members.length;
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
+    // Container-free: the host view (My Team) provides page width/padding.
+    <div className="space-y-4">
       {/* Deadline banner */}
       {isOpen && deadlineInfo.deadlineStr && (
         <div
@@ -272,6 +273,6 @@ export default function DraftPickView({
           )}
         </>
       )}
-    </main>
+    </div>
   );
 }

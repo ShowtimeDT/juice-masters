@@ -6,8 +6,10 @@ import { defaultMyTeamMajor, getTournamentState } from "@/lib/tournament-state";
 import { fetchTournamentData } from "@/lib/espn";
 import { getGolferScore } from "@/lib/scoring";
 import { GolferScore } from "@/lib/types";
+import { DraftData } from "@/lib/draft/types";
 import TeamIdentityCard, { LeagueMember } from "./TeamIdentityCard";
 import TeamGolferRow from "./TeamGolferRow";
+import DraftPickView from "@/components/draft/DraftPickView";
 
 const MAJORS = TOURNAMENTS.filter((t) => t.id !== "season");
 
@@ -22,6 +24,10 @@ interface MyTeamProps {
   leagueId: string;
   myMember: LeagueMember | null;
   onMemberUpdated: () => void;
+  /** Major with a live draft — selected by default, shows the pick screen. */
+  openDraftTournamentId?: TournamentId | null;
+  /** Called after picks are submitted so the page can refresh the tab badge. */
+  onPicksChanged?: () => void;
 }
 
 export interface TeamGolfer {
@@ -30,11 +36,23 @@ export interface TeamGolfer {
   score: GolferScore;
 }
 
-export default function MyTeam({ leagueId, myMember, onMemberUpdated }: MyTeamProps) {
-  const [major, setMajor] = useState<TournamentId>(defaultMyTeamMajor());
+export default function MyTeam({
+  leagueId,
+  myMember,
+  onMemberUpdated,
+  openDraftTournamentId,
+  onPicksChanged,
+}: MyTeamProps) {
+  const [major, setMajor] = useState<TournamentId>(openDraftTournamentId ?? defaultMyTeamMajor());
   const [golfers, setGolfers] = useState<TeamGolfer[] | null>(null);
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
+  const [liveDraft, setLiveDraft] = useState<DraftData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // The open-draft major arrives async after mount — land on it once known.
+  useEffect(() => {
+    if (openDraftTournamentId) setMajor(openDraftTournamentId);
+  }, [openDraftTournamentId]);
 
   const loadTeam = useCallback(async () => {
     if (!myMember) {
@@ -44,6 +62,7 @@ export default function MyTeam({ leagueId, myMember, onMemberUpdated }: MyTeamPr
     setLoading(true);
     setGolfers(null);
     setDraftStatus(null);
+    setLiveDraft(null);
     try {
       const draftRes = await fetch(`/api/draft/tournament/${major}?league_id=${leagueId}`);
       const draftData = await draftRes.json();
@@ -52,6 +71,13 @@ export default function MyTeam({ leagueId, myMember, onMemberUpdated }: MyTeamPr
         return;
       }
       setDraftStatus(draftData.draft.status as string);
+
+      // Live draft → the pick screen takes over this major's slot.
+      if (draftData.draft.status === "open") {
+        setLiveDraft(draftData as DraftData);
+        setLoading(false);
+        return;
+      }
 
       const picks: DraftPick[] = (draftData.picks || []).filter(
         (p: DraftPick) => p.user_id === myMember.user_id || p.owner === myMember.display_name
@@ -120,17 +146,23 @@ export default function MyTeam({ leagueId, myMember, onMemberUpdated }: MyTeamPr
           title="You're not in this league yet"
           body="Join the league (or claim your team from the invite link) to field a team."
         />
+      ) : liveDraft ? (
+        <DraftPickView
+          draftData={liveDraft}
+          config={getTournament(major)}
+          onPicksSubmitted={() => {
+            loadTeam();
+            onPicksChanged?.();
+          }}
+          leagueId={leagueId}
+          isMember
+        />
       ) : golfers ? (
         <div className="bg-card rounded-lg border border-edge overflow-hidden">
           <div className="px-4 py-3 border-b border-edge flex items-center justify-between">
             <h3 className="text-white font-bold text-sm uppercase tracking-wide">
               {getTournament(major).shortName} Roster
             </h3>
-            {draftStatus === "open" && (
-              <span className="text-faint text-[10px] uppercase tracking-wider">
-                Picks are private until the draft locks
-              </span>
-            )}
           </div>
           <div>
             {golfers.map((g) => (
@@ -138,11 +170,6 @@ export default function MyTeam({ leagueId, myMember, onMemberUpdated }: MyTeamPr
             ))}
           </div>
         </div>
-      ) : draftStatus === "open" ? (
-        <EmptyState
-          title="You haven't made your picks yet"
-          body="The draft is open — head to the Standings tab and hit Draft Now before it locks."
-        />
       ) : draftStatus ? (
         <EmptyState
           title={`No team this major`}

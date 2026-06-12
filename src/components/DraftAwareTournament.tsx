@@ -7,7 +7,6 @@ import { DraftData } from "@/lib/draft/types";
 import { Entry } from "@/lib/types";
 import TournamentHeader from "./TournamentHeader";
 import TournamentPlaceholder from "./TournamentPlaceholder";
-import DraftPickView from "./draft/DraftPickView";
 import Leaderboard from "./Leaderboard";
 import AuthModal from "./auth/AuthModal";
 
@@ -15,15 +14,16 @@ interface DraftAwareTournamentProps {
   config: TournamentConfig;
   leagueId?: string;
   isMember?: boolean;
+  /** Drafting lives in My Team — this jumps the user there. */
+  onDraftNow?: () => void;
 }
 
-export default function DraftAwareTournament({ config, leagueId, isMember }: DraftAwareTournamentProps) {
+export default function DraftAwareTournament({ config, leagueId, isMember, onDraftNow }: DraftAwareTournamentProps) {
   const { data: session } = useSession();
   const [draftData, setDraftData] = useState<DraftData | null>(null);
   const [draftEntries, setDraftEntries] = useState<Entry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showDraftPicker, setShowDraftPicker] = useState(false);
 
   const fetchDraft = useCallback(async () => {
     try {
@@ -90,33 +90,9 @@ export default function DraftAwareTournament({ config, leagueId, isMember }: Dra
     return <Leaderboard tournamentId={config.id} entries={draftEntries} />;
   }
 
-  // Draft is open or closed → show member list + Draft Now
+  // Draft is open or closed → show member list + jump-to-My-Team button
   const pickCounts = draftData.pickCounts || [];
   const userHasPicked = session?.user?.name && pickCounts.some((pc) => pc.owner === session.user?.name);
-
-  // If user clicked "Draft Now", show the pick view
-  if (showDraftPicker && session?.user) {
-    return (
-      <>
-        <TournamentHeader tournament={config} roundStatus={draftData.draft.status === "open" ? "Draft Open" : "Draft Closed"} lastUpdated={null} onRefresh={() => {}} />
-        <div className="max-w-5xl mx-auto px-4 pt-4">
-          <button
-            onClick={() => setShowDraftPicker(false)}
-            className="text-gray-400 text-sm hover:text-white transition-colors cursor-pointer mb-2"
-          >
-            ← Back to standings
-          </button>
-        </div>
-        <DraftPickView
-          draftData={draftData}
-          config={config}
-          onPicksSubmitted={() => { fetchDraft(); setShowDraftPicker(false); }}
-          leagueId={leagueId}
-          isMember={isMember}
-        />
-      </>
-    );
-  }
 
   const isOpen = draftData.draft.status === "open";
   const closeTimeStr = draftData.draft.close_time
@@ -142,14 +118,14 @@ export default function DraftAwareTournament({ config, leagueId, isMember }: Dra
           </div>
         )}
 
-        {/* Draft Now button */}
+        {/* Jump to the My Team tab, where drafting lives */}
         {isOpen && session?.user && isMember && (
           <button
-            onClick={() => setShowDraftPicker(true)}
+            onClick={onDraftNow}
             className="w-full py-4 text-white font-semibold text-sm rounded-lg transition-colors cursor-pointer"
             style={{ backgroundColor: config.theme.primary }}
           >
-            {userHasPicked ? "Update Picks" : "Draft Now"}
+            {userHasPicked ? "Update Your Picks →" : "Make Your Picks →"}
           </button>
         )}
 
