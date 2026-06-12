@@ -104,8 +104,9 @@ export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) 
 
         <TopFiveStrip golfers={topFive} />
 
-        {/* Right: score + chevron, mirrors the left column's width */}
-        <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0 sm:w-[var(--side-col)]">
+        {/* Right: score + chevron, mirrors the left column's width. The
+            wide gap floats the score off the card edge. */}
+        <div className="flex items-center justify-end gap-3 sm:gap-10 shrink-0 sm:w-[var(--side-col)]">
           <div className={`text-right ${scoreColor(countingScore)}`}>
             <span className="text-2xl sm:text-[2.2rem] font-serif font-bold leading-none">
               {formatScore(countingScore)}
