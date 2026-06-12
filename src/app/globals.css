@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1a1a1a;
-  --foreground: #ededed;
+  --background: #0A0D0C;
+  --foreground: #F3F4F6;
 }
 
 /*
@@ -12,35 +12,44 @@
  * Tournament-specific colors (gradients, accents) live in src/lib/tournaments.ts.
  */
 @theme {
-  /* Surfaces */
-  --color-surface: #1a1a1a;            /* page background */
-  --color-card: #1e2124;               /* card background */
-  --color-card-inset: #181a1c;         /* expanded-table background inside cards */
+  /* Surfaces — green-tinted near-black family */
+  --color-surface: #0A0D0C;            /* page background */
+  --color-card: #141816;               /* card background */
+  --color-card-inset: #0F1311;         /* expanded-table background inside cards */
 
   /* Borders */
-  --color-edge: #3a3e3a;               /* card borders */
-  --color-edge-hover: #4a4e4a;         /* card borders on hover */
+  --color-edge: #272D29;               /* card borders */
+  --color-edge-hover: #38403B;         /* card borders on hover */
+
+  /* Text never uses pure white — text-white resolves to this */
+  --color-white: #F3F4F6;
 
   /* Golf scores */
   --color-under: #4ade80;              /* under par (green) */
   --color-over: #f87171;               /* over par (red) */
-  --color-even: #9a9e9a;               /* even par */
+  --color-even: #9CA3AF;               /* even par */
 
   /* Text */
-  --color-ink: #d4d4d4;                /* rank numerals */
-  --color-muted: #9aa0a6;              /* secondary text (header timestamp) */
-  --color-faint: #5a5e5a;              /* table headers, chevrons */
-  --color-label: #7a7e7a;              /* tiny labels under headshots */
-  --color-label-dim: #6b7070;          /* uppercase info labels */
+  --color-ink: #E3E6EA;                /* rank numerals */
+  --color-muted: #9CA3AF;              /* secondary text (header timestamp) */
+  --color-faint: #6A717C;              /* table headers, chevrons */
+  --color-label: #8A919C;              /* tiny labels under headshots */
+  --color-label-dim: #767D88;          /* uppercase info labels */
+
+  /* Body-text grays — gray-400 is the canonical secondary text color */
+  --color-gray-300: #C7CCD4;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #7E8590;
+  --color-gray-600: #5C636E;
 
   /* Brand */
-  --color-brand: #C8A951;             /* Juice gold — league chrome, links, buttons */
-  --color-brand-hover: #d4b96a;       /* Juice gold hover state */
+  --color-brand: #D4AF37;             /* metallic gold — chrome, links, buttons */
+  --color-brand-hover: #E1C155;       /* gold hover state */
 
   /* Headshot avatars */
-  --color-avatar: #2a2e2a;             /* avatar background */
-  --color-avatar-ring: #3a5a3a;        /* avatar border */
-  --color-avatar-ring-hover: #4a7a4a;  /* avatar border on hover */
+  --color-avatar: #1A201C;             /* avatar background */
+  --color-avatar-ring: #2E4A38;        /* avatar border */
+  --color-avatar-ring-hover: #3F6A4E;  /* avatar border on hover */
 }
 
 @theme inline {
@@ -52,10 +61,20 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
 }
 
 .font-serif {
   font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Soft gold halo for primary call-to-action buttons */
+.glow-brand {
+  transition: box-shadow 0.25s ease, background-color 0.15s ease;
+}
+.glow-brand:hover {
+  box-shadow: 0 0 28px color-mix(in srgb, var(--color-brand) 45%, transparent);
 }
 
 /* Force dark mode for native date/time pickers */

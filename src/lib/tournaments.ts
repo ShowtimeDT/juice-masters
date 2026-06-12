@@ -31,8 +31,8 @@ export interface TournamentConfig {
   firstTeeTime: string; // ISO datetime of first tee time (ET); fallback auto-lock
 }
 
-/** Translucent version of a hex color (alpha 0–1) for row highlights. */
-function withAlpha(hex: string, alpha: number): string {
+/** Translucent version of a hex color (alpha 0–1) for highlights and glows. */
+export function withAlpha(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -52,15 +52,15 @@ const mastersTheme: TournamentTheme = {
 };
 
 const pgaTheme: TournamentTheme = {
-  primary: "#C8A951",
+  primary: "#D4AF37",
   gradientFrom: "#00205B",
   gradientVia: "#122d55",
   gradientTo: "#0a1a3b",
-  accent: "#C8A951",
-  accentHover: "#d4b96a",
+  accent: "#D4AF37",
+  accentHover: "#E1C155",
   accentMuted: "#8a9ab2",
-  highlightBg: withAlpha("#C8A951", 0.15),
-  badgeText: "#C8A951",
+  highlightBg: withAlpha("#D4AF37", 0.15),
+  badgeText: "#D4AF37",
 };
 
 const usOpenTheme: TournamentTheme = {
@@ -88,15 +88,15 @@ const theOpenTheme: TournamentTheme = {
 };
 
 const seasonTheme: TournamentTheme = {
-  primary: "#C8A951",
+  primary: "#D4AF37",
   gradientFrom: "#3a3a3a",
   gradientVia: "#2a2a2a",
   gradientTo: "#1a1a1a",
-  accent: "#C8A951",
-  accentHover: "#d4b96a",
+  accent: "#D4AF37",
+  accentHover: "#E1C155",
   accentMuted: "#9a9a9a",
-  highlightBg: withAlpha("#C8A951", 0.15),
-  badgeText: "#C8A951",
+  highlightBg: withAlpha("#D4AF37", 0.15),
+  badgeText: "#D4AF37",
 };
 
 export const TOURNAMENTS: TournamentConfig[] = [
