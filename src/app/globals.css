@@ -46,6 +46,12 @@
   --color-brand: #D4AF37;             /* metallic gold — chrome, links, buttons */
   --color-brand-hover: #E1C155;       /* gold hover state */
 
+  /* Scorecard paper (marketing page artifact) */
+  --color-paper: #F4EFE1;              /* cream stock */
+  --color-paper-ink: #243527;          /* green-black ink */
+  --color-paper-faint: #6B7A6E;        /* muted ink for small labels */
+  --color-paper-line: #2435274D;       /* ruling lines (~30% ink) */
+
   /* Headshot avatars */
   --color-avatar: #1A201C;             /* avatar background */
   --color-avatar-ring: #2E4A38;        /* avatar border */
