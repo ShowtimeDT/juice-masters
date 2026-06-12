@@ -6,6 +6,8 @@ import PasswordInput from "@/components/ui/PasswordInput";
 
 interface PrivacyCardProps {
   leagueId: string;
+  /** The human-friendly league ID members type to join (the URL slug). */
+  leagueSlug: string;
   /** Called after a successful save so the parent can refresh league data. */
   onSaved: () => void;
 }
@@ -23,13 +25,20 @@ const MIN_PASSWORD = 4;
  * always on display (masked, with an eye icon — the password is a shared
  * join code, recoverable by the commissioner).
  */
-export default function PrivacyCard({ leagueId, onSaved }: PrivacyCardProps) {
+export default function PrivacyCard({ leagueId, leagueSlug, onSaved }: PrivacyCardProps) {
   const [settings, setSettings] = useState<PrivacySettings | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [justSaved, setJustSaved] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+
+  const copyLeagueId = () => {
+    navigator.clipboard.writeText(leagueSlug).catch(() => {});
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +158,25 @@ export default function PrivacyCard({ leagueId, onSaved }: PrivacyCardProps) {
           </p>
         )}
         {error && <p className="text-red-400 text-xs mt-1.5">{error}</p>}
+      </div>
+
+      {/* League ID — the other half of the join combo */}
+      <div className="mt-4 pt-4 border-t border-edge">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-gray-400 text-xs uppercase tracking-wide">League ID</span>
+          <code className="text-brand bg-card-inset border border-edge rounded-lg px-3 py-1.5 text-sm font-mono font-semibold">
+            {leagueSlug}
+          </code>
+          <button
+            onClick={copyLeagueId}
+            className="text-gray-500 text-xs hover:text-white transition-colors cursor-pointer"
+          >
+            {copiedId ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+        <p className="text-gray-500 text-xs mt-1.5">
+          Members can join with this league ID plus the password — or just use the invite link.
+        </p>
       </div>
     </div>
   );
