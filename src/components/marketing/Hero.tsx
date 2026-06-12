@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getTournament, withAlpha } from "@/lib/tournaments";
 
-const theme = getTournament("season").theme;
 const mastersGreen = getTournament("masters").theme.primary;
 
 function CtaButton({
@@ -30,22 +29,33 @@ function CtaButton({
 export default function Hero() {
   return (
     <header className="relative overflow-hidden">
+      {/* Course photograph */}
+      <Image
+        src="/hero-course.jpg"
+        alt="Sunrise over a championship golf course"
+        fill
+        className="object-cover"
+        priority
+      />
+
+      {/* Darken for text legibility, melting into the page background */}
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(to bottom, ${theme.gradientFrom}, ${theme.gradientVia}, ${theme.gradientTo})`,
+          background:
+            "linear-gradient(to bottom, rgba(10,13,12,0.55) 0%, rgba(10,13,12,0.4) 45%, var(--color-surface) 100%)",
         }}
       />
 
-      {/* Faint Masters-green glow behind the hero text for depth */}
+      {/* Faint Masters-green tint for brand warmth */}
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(55% 60% at 50% 32%, ${withAlpha(mastersGreen, 0.22)}, transparent 70%)`,
+          background: `radial-gradient(55% 60% at 50% 32%, ${withAlpha(mastersGreen, 0.15)}, transparent 70%)`,
         }}
       />
 
-      <div className="relative max-w-5xl mx-auto px-4 pt-14 pb-16 text-center">
+      <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-20 sm:pt-20 sm:pb-24 text-center">
         <Image
           src="/logo-v3.png"
           alt="Juice Tour logo"
