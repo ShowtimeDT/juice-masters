@@ -159,6 +159,9 @@ async function migrate(): Promise<void> {
     // Public/private leagues; private leagues carry a bcrypt password hash.
     sql`ALTER TABLE leagues ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE`,
     sql`ALTER TABLE leagues ADD COLUMN IF NOT EXISTS password_hash TEXT`,
+    // League password, AES-encrypted (recoverable by the commissioner).
+    // Supersedes password_hash, which remains only as a legacy fallback.
+    sql`ALTER TABLE leagues ADD COLUMN IF NOT EXISTS password_enc TEXT`,
   ];
   for (const alter of alters) {
     try {
