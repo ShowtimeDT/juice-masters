@@ -79,35 +79,33 @@ export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) 
 
   return (
     <div className="bg-card rounded-lg overflow-hidden border border-edge hover:border-edge-hover transition-colors">
-      {/* Summary row */}
+      {/* Summary row. Left (rank+name) and right (score+chevron) get the
+          same fixed width on desktop, so the golfer strip is centered on
+          the card regardless of name or score length. */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 cursor-pointer text-left"
+        style={{ "--side-col": `calc(4.5rem + ${nameWidthCh}ch)` } as React.CSSProperties}
       >
-        {/* Rank */}
-        <div className="w-10 sm:w-14 text-center shrink-0">
-          <span className="text-2xl sm:text-[2rem] font-serif italic font-bold text-ink leading-none">
-            {rank}
-          </span>
-          <span className="text-xs sm:text-sm font-serif italic text-ink">
-            {rankSuffix(rank)}
-          </span>
-        </div>
-
-        {/* Name — fixed width per leaderboard so golfers align across rows */}
-        <div
-          className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-0 sm:w-[var(--name-col)] flex items-center"
-          style={{ "--name-col": `${nameWidthCh}ch` } as React.CSSProperties}
-        >
-          <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
+        {/* Left: rank + name */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-1 sm:flex-none sm:w-[var(--side-col)] min-w-0 shrink-0">
+          <div className="w-10 sm:w-14 text-center shrink-0">
+            <span className="text-2xl sm:text-[2rem] font-serif italic font-bold text-ink leading-none">
+              {rank}
+            </span>
+            <span className="text-xs sm:text-sm font-serif italic text-ink">
+              {rankSuffix(rank)}
+            </span>
+          </div>
+          <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate min-w-0">
             {entry.name}
           </h3>
         </div>
 
         <TopFiveStrip golfers={topFive} />
 
-        {/* Right section: score + info */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        {/* Right: score + chevron, mirrors the left column's width */}
+        <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0 sm:w-[var(--side-col)]">
           <div className={`text-right ${scoreColor(countingScore)}`}>
             <span className="text-2xl sm:text-[2.2rem] font-serif font-bold leading-none">
               {formatScore(countingScore)}
