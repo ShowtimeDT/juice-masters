@@ -113,9 +113,16 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
                         </span>
                       )}
                     </span>
-                    <span className="text-white font-medium truncate">
-                      {standing.teamName || standing.owner}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="block text-white font-medium truncate">
+                        {standing.teamName || standing.owner}
+                      </span>
+                      {standing.teamName && standing.teamName !== standing.owner && (
+                        <span className="block text-gray-500 text-[10px] leading-tight truncate">
+                          {standing.owner}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Per-tournament scores */}
