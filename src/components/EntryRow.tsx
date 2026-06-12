@@ -114,12 +114,6 @@ export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) 
             </span>
           </div>
 
-          <div className="hidden sm:flex flex-col items-end gap-0.5 min-w-[9rem]">
-            <span className="text-label-dim text-[10px] uppercase tracking-wider font-semibold">
-              Best 5 Scores Counting
-            </span>
-          </div>
-
           {/* Expand icon */}
           <svg
             className={`w-4 h-4 text-faint transition-transform shrink-0 ${
