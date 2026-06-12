@@ -25,7 +25,7 @@ export async function GET(
     // No emails; LEFT JOIN so unclaimed historical members still appear.
     const members = await sql`
       SELECT lm.id, lm.league_id, lm.user_id, lm.display_name, lm.team_name,
-             lm.joined_at, u.username
+             lm.team_photo, lm.joined_at, u.username
       FROM league_members lm
       LEFT JOIN users u ON u.id = lm.user_id
       WHERE lm.league_id = ${league.id}

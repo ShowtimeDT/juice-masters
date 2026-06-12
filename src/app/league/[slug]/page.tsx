@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { getTournament, isTournamentId, TournamentId } from "@/lib/tournaments";
 import TournamentTabs from "@/components/TournamentTabs";
 import AppTabs, { AppView, isAppView } from "@/components/AppTabs";
+import MyTeam from "@/components/team/MyTeam";
 import { defaultTournamentTab } from "@/lib/tournament-state";
 import DraftAwareTournament from "@/components/DraftAwareTournament";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
@@ -21,7 +22,13 @@ interface LeagueInfo {
 
 interface LeagueData {
   league: LeagueInfo;
-  members: { user_id: string | null; display_name: string }[];
+  members: {
+    id: number;
+    user_id: string | null;
+    display_name: string;
+    team_name: string | null;
+    team_photo: string | null;
+  }[];
 }
 
 interface MyLeague {
@@ -227,9 +234,12 @@ function LeagueContent() {
         )}
 
         {activeView === "team" && (
-          <ComingSoonPanel
-            title="My Team"
-            body="Your team page — every major, every golfer, hole by hole — is being built right now."
+          <MyTeam
+            leagueId={leagueData.league.id}
+            myMember={
+              leagueData.members.find((m) => m.user_id === session?.user?.id) ?? null
+            }
+            onMemberUpdated={fetchLeague}
           />
         )}
 

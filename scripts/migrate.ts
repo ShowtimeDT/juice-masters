@@ -154,6 +154,8 @@ async function migrate(): Promise<void> {
     sql`ALTER TABLE drafts ADD COLUMN IF NOT EXISTS league_id UUID REFERENCES leagues(id)`,
     sql`ALTER TABLE draft_picks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id)`,
     sql`ALTER TABLE draft_members ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id)`,
+    // Team pictures: small client-resized JPEGs stored as data URLs.
+    sql`ALTER TABLE league_members ADD COLUMN IF NOT EXISTS team_photo TEXT`,
   ];
   for (const alter of alters) {
     try {

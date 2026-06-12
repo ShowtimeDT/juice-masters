@@ -42,3 +42,17 @@ export function defaultTournamentTab(): TournamentId {
   );
   return live?.id ?? "season";
 }
+
+/**
+ * The major a My Team page should open on: the live major if one is
+ * underway, otherwise the most recently completed one, otherwise the
+ * first major of the season.
+ */
+export function defaultMyTeamMajor(): TournamentId {
+  const majors = TOURNAMENTS.filter((t) => t.id !== "season");
+  const live = majors.find((t) => getTournamentState(t) === "in-progress");
+  if (live) return live.id;
+  const completed = majors.filter((t) => getTournamentState(t) === "completed");
+  if (completed.length > 0) return completed[completed.length - 1].id;
+  return majors[0].id;
+}
