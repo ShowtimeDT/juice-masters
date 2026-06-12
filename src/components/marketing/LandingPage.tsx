@@ -24,7 +24,7 @@ export default function LandingPage() {
         </p>
         <Link
           href="/login?callbackUrl=/?create=1"
-          className="inline-block px-8 py-3.5 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors"
+          className="inline-block px-8 py-3.5 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover glow-brand"
         >
           Start Your League — Free
         </Link>
