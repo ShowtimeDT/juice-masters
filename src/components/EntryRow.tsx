@@ -15,6 +15,8 @@ import GolferRow from "./GolferRow";
 
 interface EntryRowProps {
   standing: EntryStanding;
+  /** Uniform team-name column width (ch) so golfers align across rows. */
+  nameWidthCh?: number;
 }
 
 function HeadshotAvatar({ golfer }: { golfer: GolferScoreWithCounting }) {
@@ -65,7 +67,7 @@ function sortByEffectiveScore(golfers: GolferScoreWithCounting[]) {
   return [...golfers].sort((a, b) => a.effectiveScore - b.effectiveScore);
 }
 
-export default function EntryRow({ standing }: EntryRowProps) {
+export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) {
   const [expanded, setExpanded] = useState(false);
   const { entry, golferScores, countingScore, rank } = standing;
 
@@ -92,8 +94,11 @@ export default function EntryRow({ standing }: EntryRowProps) {
           </span>
         </div>
 
-        {/* Name */}
-        <div className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex items-center">
+        {/* Name — fixed width per leaderboard so golfers align across rows */}
+        <div
+          className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-0 sm:w-[var(--name-col)] flex items-center"
+          style={{ "--name-col": `${nameWidthCh}ch` } as React.CSSProperties}
+        >
           <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
             {entry.name}
           </h3>

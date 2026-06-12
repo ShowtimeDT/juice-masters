@@ -51,6 +51,19 @@ export function golferLastName(name: string): string {
   return name.split(" ").pop() ?? name;
 }
 
+/**
+ * Width (in ch units) for a leaderboard's team-name column: fits the
+ * longest name in the league, but never wider than the cap — longer names
+ * truncate with an ellipsis. Uniform per leaderboard so every row's
+ * golfers start at the same x.
+ */
+export function nameColumnWidthCh(names: string[], capChars = 20): number {
+  const longest = names.reduce((max, name) => Math.max(max, name.length), 0);
+  const MIN = 8; // don't collapse below a sane floor
+  const BUFFER = 1; // proportional fonts run slightly wider than ch
+  return Math.min(Math.max(longest, MIN), capChars) + BUFFER;
+}
+
 /** "S. Scheffler"-style abbreviation for narrow layouts. */
 export function golferShortName(name: string): string {
   const parts = name.split(" ");
