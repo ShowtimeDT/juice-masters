@@ -45,12 +45,15 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
     rounds.push({
       round: i + 1,
       score: roundData.displayValue,
-      // Hole-by-hole detail: strokes + score-to-par per hole.
-      holes: holeScores.map((h: { period?: number; displayValue?: string; scoreType?: { displayValue?: string } }, idx: number) => ({
-        hole: h.period ?? idx + 1,
-        strokes: h.displayValue ?? "-",
-        toPar: parseScore(h.scoreType?.displayValue),
-      })),
+      // Hole-by-hole detail: strokes + score-to-par per hole. ESPN lists
+      // holes in play order (10th-tee starts exist) — sort to 1..18.
+      holes: holeScores
+        .map((h: { period?: number; displayValue?: string; scoreType?: { displayValue?: string } }, idx: number) => ({
+          hole: h.period ?? idx + 1,
+          strokes: h.displayValue ?? "-",
+          toPar: parseScore(h.scoreType?.displayValue),
+        }))
+        .sort((a: { hole: number }, b: { hole: number }) => a.hole - b.hole),
     });
 
     // Determine thru based on the latest active round
