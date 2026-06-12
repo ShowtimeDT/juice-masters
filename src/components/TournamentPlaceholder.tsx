@@ -1,41 +1,14 @@
 "use client";
 
 import { TournamentConfig } from "@/lib/tournaments";
+import { getTournamentState } from "@/lib/tournament-state";
 
 interface TournamentPlaceholderProps {
   config: TournamentConfig;
 }
 
-type TournamentState = "upcoming" | "in-progress" | "completed";
-
-function getTournamentState(config: TournamentConfig): TournamentState {
-  const now = new Date();
-
-  // Parse start/end from espnDatesParam (format: "20260409-20260412")
-  if (!config.espnDatesParam) return "upcoming";
-  const [startStr, endStr] = config.espnDatesParam.split("-");
-  if (!startStr || !endStr) return "upcoming";
-
-  const startDate = new Date(
-    parseInt(startStr.slice(0, 4)),
-    parseInt(startStr.slice(4, 6)) - 1,
-    parseInt(startStr.slice(6, 8))
-  );
-  // End date: tournament ends at ~midnight after the last day
-  const endDate = new Date(
-    parseInt(endStr.slice(0, 4)),
-    parseInt(endStr.slice(4, 6)) - 1,
-    parseInt(endStr.slice(6, 8)),
-    23, 59, 59
-  );
-
-  if (now > endDate) return "completed";
-  if (now >= startDate) return "in-progress";
-  return "upcoming";
-}
-
 export default function TournamentPlaceholder({ config }: TournamentPlaceholderProps) {
-    const state = getTournamentState(config);
+  const state = getTournamentState(config);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">

@@ -6,6 +6,8 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { getTournament, isTournamentId, TournamentId } from "@/lib/tournaments";
 import TournamentTabs from "@/components/TournamentTabs";
+import AppTabs, { AppView, isAppView } from "@/components/AppTabs";
+import { defaultTournamentTab } from "@/lib/tournament-state";
 import DraftAwareTournament from "@/components/DraftAwareTournament";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 
@@ -29,6 +31,17 @@ interface MyLeague {
   is_commissioner: boolean;
 }
 
+function ComingSoonPanel({ title, body }: { title: string; body: string }) {
+  return (
+    <main className="max-w-5xl mx-auto px-4 py-16">
+      <div className="bg-card rounded-lg border border-edge px-6 py-14 text-center">
+        <h2 className="text-white font-serif font-bold text-2xl mb-2">{title}</h2>
+        <p className="text-gray-400 text-sm">{body}</p>
+      </div>
+    </main>
+  );
+}
+
 function LeagueContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -43,8 +56,10 @@ function LeagueContent() {
   const [showLeagueDropdown, setShowLeagueDropdown] = useState(false);
 
   const tabParam = searchParams.get("t");
-  const activeTab: TournamentId = isTournamentId(tabParam) ? tabParam : "masters";
+  const activeTab: TournamentId = isTournamentId(tabParam) ? tabParam : defaultTournamentTab();
   const config = getTournament(activeTab);
+  const viewParam = searchParams.get("v");
+  const activeView: AppView = isAppView(viewParam) ? viewParam : "standings";
 
   const fetchLeague = useCallback(async () => {
     try {
@@ -56,6 +71,11 @@ function LeagueContent() {
       }
       const data = await res.json();
       setLeagueData(data);
+      try {
+        localStorage.setItem("lastLeagueSlug", slug);
+      } catch {
+        // private browsing — fine
+      }
     } catch {
       setError("Failed to load league");
     }
@@ -77,7 +97,11 @@ function LeagueContent() {
   }, [fetchLeague]);
 
   const handleTabSelect = (id: TournamentId) => {
-    router.replace(`/league/${slug}?t=${id}`, { scroll: false });
+    router.replace(`/league/${slug}?v=${activeView}&t=${id}`, { scroll: false });
+  };
+
+  const handleViewSelect = (view: AppView) => {
+    router.replace(`/league/${slug}?v=${view}`, { scroll: false });
   };
 
   if (loading) {
@@ -138,7 +162,7 @@ function LeagueContent() {
                     ))}
                     <div className="border-t border-edge">
                       <Link
-                        href="/"
+                        href="/?home=1"
                         className="block px-4 py-2 text-xs text-brand hover:text-white transition-colors rounded-b-lg"
                         onClick={() => setShowLeagueDropdown(false)}
                       >
@@ -184,15 +208,35 @@ function LeagueContent() {
           </div>
         </div>
 
-        <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
+        <AppTabs active={activeView} onSelect={handleViewSelect} />
 
-        {config.id === "season" ? (
-          <SeasonLeaderboard leagueId={leagueData.league.id} />
-        ) : (
-          <DraftAwareTournament
-            config={config}
-            leagueId={leagueData.league.id}
-            isMember={!!leagueData.members.some((m) => m.user_id === session?.user?.id)}
+        {activeView === "standings" && (
+          <>
+            <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
+
+            {config.id === "season" ? (
+              <SeasonLeaderboard leagueId={leagueData.league.id} />
+            ) : (
+              <DraftAwareTournament
+                config={config}
+                leagueId={leagueData.league.id}
+                isMember={!!leagueData.members.some((m) => m.user_id === session?.user?.id)}
+              />
+            )}
+          </>
+        )}
+
+        {activeView === "team" && (
+          <ComingSoonPanel
+            title="My Team"
+            body="Your team page — every major, every golfer, hole by hole — is being built right now."
+          />
+        )}
+
+        {activeView === "chat" && (
+          <ComingSoonPanel
+            title="League Chat"
+            body="The league bulletin board is on its way. Sharpen your trash talk."
           />
         )}
     </div>

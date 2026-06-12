@@ -32,6 +32,25 @@ export default function LeagueHome() {
     if (params.get("join") === "1") joinInputRef.current?.focus();
   }, [loading]);
 
+  // Members land in their league, not on this picker. Skipped when the
+  // visit is intentional: ?home=1 (league switcher), ?create=1 / ?join=1
+  // (landing CTAs), or when the user has no leagues yet.
+  useEffect(() => {
+    if (loading || leagues.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("home") === "1" || params.get("create") === "1" || params.get("join") === "1") {
+      return;
+    }
+    let target = leagues[0].slug;
+    try {
+      const last = localStorage.getItem("lastLeagueSlug");
+      if (last && leagues.some((l) => l.slug === last)) target = last;
+    } catch {
+      // private browsing — first league it is
+    }
+    router.replace(`/league/${target}`);
+  }, [loading, leagues, router]);
+
   const fetchLeagues = async () => {
     try {
       const res = await fetch("/api/leagues/my");
