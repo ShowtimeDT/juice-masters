@@ -42,6 +42,11 @@ interface MyLeague {
   is_commissioner: boolean;
 }
 
+interface OpenDraftInfo {
+  tournamentId: TournamentId;
+  hasPicked: boolean;
+}
+
 function LeagueContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -53,6 +58,7 @@ function LeagueContent() {
   const [myLeagues, setMyLeagues] = useState<MyLeague[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [openDraft, setOpenDraft] = useState<OpenDraftInfo | null>(null);
 
   const tabParam = searchParams.get("t");
   const activeTab: TournamentId = isTournamentId(tabParam) ? tabParam : defaultTournamentTab();
@@ -95,6 +101,47 @@ function LeagueContent() {
   useEffect(() => {
     fetchLeague();
   }, [fetchLeague]);
+
+  // Is a draft live in this league, and has this member picked yet?
+  // Drives the My Team tab badge and the default major on that tab.
+  const myMember = leagueData?.members.find((m) => m.user_id === session?.user?.id) ?? null;
+  const myDisplayName = myMember?.display_name ?? null;
+  const leagueDbId = leagueData?.league.id ?? null;
+
+  const fetchOpenDraft = useCallback(async () => {
+    if (!myDisplayName || !leagueDbId) {
+      setOpenDraft(null);
+      return;
+    }
+    try {
+      const listRes = await fetch("/api/draft/list");
+      if (!listRes.ok) return;
+      const drafts: { league_id: string; tournament_id: string; status: string }[] =
+        await listRes.json();
+      const open = drafts.find((d) => d.league_id === leagueDbId && d.status === "open");
+      if (!open || !isTournamentId(open.tournament_id)) {
+        setOpenDraft(null);
+        return;
+      }
+      // The tournament endpoint auto-locks expired drafts and counts picks.
+      const res = await fetch(`/api/draft/tournament/${open.tournament_id}?league_id=${leagueDbId}`);
+      const data = await res.json();
+      if (data?.draft?.status !== "open") {
+        setOpenDraft(null);
+        return;
+      }
+      const hasPicked = (data.pickCounts || []).some(
+        (pc: { owner: string }) => pc.owner === myDisplayName
+      );
+      setOpenDraft({ tournamentId: open.tournament_id, hasPicked });
+    } catch {
+      // no badge — next visit retries
+    }
+  }, [myDisplayName, leagueDbId]);
+
+  useEffect(() => {
+    fetchOpenDraft();
+  }, [fetchOpenDraft]);
 
   const handleTabSelect = (id: TournamentId) => {
     router.replace(`/league/${slug}?v=${activeView}&t=${id}`, { scroll: false });
@@ -148,7 +195,11 @@ function LeagueContent() {
 
   return (
     <div className="min-h-screen bg-surface">
-        <AppTabs active={activeView} onSelect={handleViewSelect}>
+        <AppTabs
+          active={activeView}
+          onSelect={handleViewSelect}
+          teamBadge={!!openDraft && !openDraft.hasPicked}
+        >
           <LeagueSwitcher
             currentName={leagueData.league.name}
             currentSlug={slug}
@@ -168,7 +219,8 @@ function LeagueContent() {
               <DraftAwareTournament
                 config={config}
                 leagueId={leagueData.league.id}
-                isMember={!!leagueData.members.some((m) => m.user_id === session?.user?.id)}
+                isMember={!!myMember}
+                onDraftNow={() => handleViewSelect("team")}
               />
             )}
           </>
@@ -177,18 +229,15 @@ function LeagueContent() {
         {activeView === "team" && (
           <MyTeam
             leagueId={leagueData.league.id}
-            myMember={
-              leagueData.members.find((m) => m.user_id === session?.user?.id) ?? null
-            }
+            myMember={myMember}
             onMemberUpdated={fetchLeague}
+            openDraftTournamentId={openDraft?.tournamentId ?? null}
+            onPicksChanged={fetchOpenDraft}
           />
         )}
 
         {activeView === "chat" && (
-          <LeagueChat
-            leagueId={leagueData.league.id}
-            isMember={!!leagueData.members.some((m) => m.user_id === session?.user?.id)}
-          />
+          <LeagueChat leagueId={leagueData.league.id} isMember={!!myMember} />
         )}
     </div>
   );
