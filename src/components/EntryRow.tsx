@@ -20,10 +20,10 @@ interface EntryRowProps {
 function HeadshotAvatar({ golfer }: { golfer: GolferScoreWithCounting }) {
   return (
     <div
-      className={`relative w-10 h-10 rounded-full overflow-hidden bg-avatar border-2 transition-colors ${
+      className={`relative w-12 h-12 rounded-full overflow-hidden bg-avatar ring-1 transition-all ${
         golfer.missedCut
-          ? "border-red-500/40 grayscale opacity-60"
-          : "border-avatar-ring hover:border-avatar-ring-hover"
+          ? "ring-red-500/40 grayscale opacity-60"
+          : "ring-white/10"
       }`}
     >
       {golfer.espnId ? (
@@ -47,12 +47,12 @@ function TopFiveStrip({ golfers }: { golfers: GolferScoreWithCounting[] }) {
   return (
     <div className="hidden sm:flex flex-1 items-center justify-center gap-5">
       {golfers.map((g) => (
-        <div key={`${g.name}-${g.tier}`} className="flex flex-col items-center gap-1 w-14">
+        <div key={`${g.name}-${g.tier}`} className="flex flex-col items-center gap-1 w-16">
           <HeadshotAvatar golfer={g} />
           <span className="text-[10px] text-label text-center leading-tight truncate w-full">
             {golferLastName(g.name)}
           </span>
-          <span className={`text-[10px] font-mono font-semibold ${scoreColor(g.effectiveScore)}`}>
+          <span className={`text-[10px] font-mono font-semibold tabular-nums ${scoreColor(g.effectiveScore)}`}>
             {g.scoreDisplay === "-" ? "-" : formatScore(g.effectiveScore)}
           </span>
         </div>
@@ -76,7 +76,7 @@ export default function EntryRow({ standing }: EntryRowProps) {
   ];
 
   return (
-    <div className="bg-card rounded-lg overflow-hidden border border-edge hover:border-edge-hover transition-colors">
+    <div className="bg-card rounded-lg overflow-hidden border border-white/5 hover:bg-white/5 hover:border-white/10 transition-all duration-200">
       {/* Summary row */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -84,17 +84,17 @@ export default function EntryRow({ standing }: EntryRowProps) {
       >
         {/* Rank */}
         <div className="w-10 sm:w-14 text-center shrink-0">
-          <span className="text-2xl sm:text-[2rem] font-serif italic font-bold text-ink leading-none">
+          <span className="text-2xl sm:text-[2rem] font-serif italic font-bold text-gray-500 leading-none">
             {rank}
           </span>
-          <span className="text-xs sm:text-sm font-serif italic text-ink">
+          <span className="text-xs sm:text-sm font-serif italic text-gray-500">
             {rankSuffix(rank)}
           </span>
         </div>
 
         {/* Name */}
         <div className="flex-1 sm:flex-none sm:shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem] flex items-center">
-          <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
+          <h3 className="text-gray-100 font-semibold text-base sm:text-lg leading-tight truncate">
             {entry.name}
           </h3>
         </div>
@@ -104,13 +104,13 @@ export default function EntryRow({ standing }: EntryRowProps) {
         {/* Right section: score + info */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <div className={`text-right ${scoreColor(countingScore)}`}>
-            <span className="text-2xl sm:text-[2.2rem] font-serif font-bold leading-none">
+            <span className="text-4xl sm:text-5xl font-bold leading-none tabular-nums">
               {formatScore(countingScore)}
             </span>
           </div>
 
           <div className="hidden sm:flex flex-col items-end gap-0.5 min-w-[9rem]">
-            <span className="text-label-dim text-[10px] uppercase tracking-wider font-semibold">
+            <span className="text-gray-500 text-xs uppercase tracking-widest font-semibold">
               Best 5 Scores Counting
             </span>
           </div>
