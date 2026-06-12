@@ -56,15 +56,17 @@ export default function TeamGolferRow({ golfer }: { golfer: TeamGolfer }) {
         )}
       </div>
 
-      {/* Rounds (desktop) */}
-      <div className="hidden sm:flex items-center gap-3 shrink-0">
-        {[0, 1, 2, 3].map((i) => (
-          <span key={i} className="w-8 text-center text-xs text-gray-400 font-mono tabular-nums">
-            {score.rounds[i]?.score ?? "-"}
-          </span>
-        ))}
-        <span className="w-8 text-center text-xs text-gray-500">{score.thru}</span>
-      </div>
+      {/* Rounds (desktop) — hidden while expanded; the scorecard shows them */}
+      {!expanded && (
+        <div className="hidden sm:flex items-center gap-3 shrink-0">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className="w-8 text-center text-xs text-gray-400 font-mono tabular-nums">
+              {score.rounds[i]?.score ?? "-"}
+            </span>
+          ))}
+          <span className="w-8 text-center text-xs text-gray-500">{score.thru}</span>
+        </div>
+      )}
 
       {/* Total */}
       <span

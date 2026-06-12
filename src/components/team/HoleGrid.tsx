@@ -1,4 +1,5 @@
 import { HoleScore, RoundScore } from "@/lib/types";
+import { scoreColor } from "@/lib/format";
 
 /**
  * Golf-notation hole cell: circles for under par (double ring = eagle+),
@@ -14,7 +15,7 @@ function holeStyle(toPar: number): string {
 
 function HoleCell({ hole }: { hole: HoleScore }) {
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-1 shrink-0">
       <span className="text-[9px] text-faint">{hole.hole}</span>
       <span
         className={`w-6 h-6 flex items-center justify-center text-[11px] font-mono tabular-nums ${holeStyle(hole.toPar)}`}
@@ -25,34 +26,30 @@ function HoleCell({ hole }: { hole: HoleScore }) {
   );
 }
 
-function NineHoles({ holes }: { holes: HoleScore[] }) {
-  return (
-    <div className="flex gap-1 sm:gap-1.5">
-      {holes.map((h) => (
-        <HoleCell key={h.hole} hole={h} />
-      ))}
-    </div>
-  );
-}
-
-/** One round's 18 holes, split front nine / back nine. */
+/** One round: holes 1–18 on a single line, round total at the end. */
 export function RoundHoles({ round }: { round: RoundScore }) {
   const holes = round.holes ?? [];
   if (holes.length === 0) return null;
-  const front = holes.filter((h) => h.hole <= 9);
-  const back = holes.filter((h) => h.hole > 9);
+  const totalToPar = round.score === "E" ? 0 : parseInt(round.score, 10) || 0;
 
   return (
     <div className="py-3 border-b border-white/5 last:border-0">
-      <div className="flex items-baseline gap-2 mb-2">
-        <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
-          Round {round.round}
-        </span>
-        <span className="text-xs font-mono text-gray-400">{round.score}</span>
-      </div>
-      <div className="flex flex-col gap-2 overflow-x-auto">
-        <NineHoles holes={front} />
-        {back.length > 0 && <NineHoles holes={back} />}
+      <span className="block text-[10px] uppercase tracking-wider text-faint font-semibold mb-2">
+        Round {round.round}
+      </span>
+      <div className="flex items-end gap-1 sm:gap-1.5 overflow-x-auto px-1 pb-1">
+        {holes.map((h) => (
+          <HoleCell key={h.hole} hole={h} />
+        ))}
+        {/* Round total after hole 18 */}
+        <div className="flex flex-col items-center gap-1 shrink-0 pl-2 sm:pl-3 ml-1 border-l border-white/10">
+          <span className="text-[9px] text-faint uppercase">Tot</span>
+          <span
+            className={`h-6 flex items-center text-[12px] font-mono font-bold tabular-nums ${scoreColor(totalToPar)}`}
+          >
+            {round.score}
+          </span>
+        </div>
       </div>
     </div>
   );
