@@ -1,16 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { formatScore, scoreColor, headshotUrl, golferInitials } from "@/lib/format";
+import { RoundHoles, HoleLegend } from "./HoleGrid";
 import type { TeamGolfer } from "./MyTeam";
 
-/** One golfer on the My Team roster: headshot, tier, score, rounds. */
+/** One golfer on the My Team roster: headshot, tier, score, rounds —
+    expands into a hole-by-hole scorecard. */
 export default function TeamGolferRow({ golfer }: { golfer: TeamGolfer }) {
+  const [expanded, setExpanded] = useState(false);
   const { score } = golfer;
   const effective = score.missedCut ? score.score + 10 : score.score;
+  const hasHoles = score.rounds.some((r) => (r.holes?.length ?? 0) > 0);
 
   return (
-    <div className="flex items-center gap-3 sm:gap-4 px-4 py-3 border-b border-white/5 last:border-0">
+    <div className="border-b border-white/5 last:border-0">
+    <button
+      onClick={() => hasHoles && setExpanded(!expanded)}
+      className={`w-full flex items-center gap-3 sm:gap-4 px-4 py-3 text-left ${
+        hasHoles ? "cursor-pointer hover:bg-white/5 transition-colors" : "cursor-default"
+      }`}
+    >
       {/* Tier */}
       <span className="w-7 text-gray-500 text-xs font-medium shrink-0">T{golfer.tier}</span>
 
@@ -61,6 +72,29 @@ export default function TeamGolferRow({ golfer }: { golfer: TeamGolfer }) {
       >
         {score.scoreDisplay === "-" ? "-" : formatScore(effective)}
       </span>
+
+      {/* Expand chevron (only when hole detail exists) */}
+      {hasHoles && (
+        <svg
+          className={`w-3.5 h-3.5 text-faint transition-transform shrink-0 ${expanded ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      )}
+    </button>
+
+    {/* Hole-by-hole scorecard */}
+    {expanded && hasHoles && (
+      <div className="px-4 pb-4 bg-card-inset">
+        {score.rounds.map((round) => (
+          <RoundHoles key={round.round} round={round} />
+        ))}
+        <HoleLegend />
+      </div>
+    )}
     </div>
   );
 }

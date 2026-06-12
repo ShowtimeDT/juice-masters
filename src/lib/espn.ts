@@ -45,6 +45,12 @@ function extractGolfer(competitor: any, currentRound: number): GolferScore {
     rounds.push({
       round: i + 1,
       score: roundData.displayValue,
+      // Hole-by-hole detail: strokes + score-to-par per hole.
+      holes: holeScores.map((h: { period?: number; displayValue?: string; scoreType?: { displayValue?: string } }, idx: number) => ({
+        hole: h.period ?? idx + 1,
+        strokes: h.displayValue ?? "-",
+        toPar: parseScore(h.scoreType?.displayValue),
+      })),
     });
 
     // Determine thru based on the latest active round
