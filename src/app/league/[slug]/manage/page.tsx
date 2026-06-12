@@ -201,7 +201,11 @@ export default function ManageLeaguePage() {
         </div>
 
         {/* Privacy */}
-        <PrivacyCard leagueId={leagueData.league.id} onSaved={fetchData} />
+        <PrivacyCard
+          leagueId={leagueData.league.id}
+          leagueSlug={leagueData.league.slug}
+          onSaved={fetchData}
+        />
 
         {/* Members */}
         <div className="bg-card rounded-lg border border-edge overflow-hidden">
