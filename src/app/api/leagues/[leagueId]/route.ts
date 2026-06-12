@@ -40,9 +40,10 @@ export async function GET(
       ORDER BY lm.joined_at
     `;
 
-    // The password hash never leaves the server; the invite code is for
+    // Password material never leaves the server; the invite code is for
     // members to share — don't hand it to strangers.
     delete league.password_hash;
+    delete league.password_enc;
     if (!(await isLeagueMemberOrCommissioner(league.id as string))) {
       delete league.invite_code;
     }

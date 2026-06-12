@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 import { requireUser, authzError } from "@/lib/authz";
+import { leaguePasswordMatches } from "@/lib/league-password";
 
 type DbRow = Record<string, unknown>;
 
@@ -39,8 +40,12 @@ export async function POST(request: NextRequest) {
       const [candidate] = await sql`
         SELECT * FROM leagues WHERE slug = ${ref} OR id::text = ${ref}
       `;
-      if (!candidate || !candidate.is_private || !candidate.password_hash) return badCombo;
-      const ok = await bcrypt.compare(password, candidate.password_hash as string);
+      if (!candidate || !candidate.is_private) return badCombo;
+      // Encrypted password first; legacy bcrypt hash as fallback.
+      const ok = candidate.password_enc
+        ? leaguePasswordMatches(password, candidate.password_enc)
+        : !!candidate.password_hash &&
+          (await bcrypt.compare(password, candidate.password_hash as string));
       if (!ok) return badCombo;
       league = candidate;
     } else {
@@ -50,8 +55,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The hash never leaves the server.
+    // Password material never leaves the server.
     delete league.password_hash;
+    delete league.password_enc;
 
     // Already a member?
     const [existing] = await sql`
