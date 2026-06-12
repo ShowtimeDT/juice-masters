@@ -209,15 +209,6 @@ export default function TournamentSettingsPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {draft?.status === "pending" && (
-              <button
-                onClick={startDraft}
-                disabled={saving}
-                className="px-4 py-2 bg-green-600 text-white font-semibold text-xs rounded-lg hover:bg-green-500 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {saving ? "Starting..." : "Start Draft"}
-              </button>
-            )}
             {draft?.status === "open" && (
               <>
                 <button
@@ -250,7 +241,7 @@ export default function TournamentSettingsPage() {
         {!draft && (
           <div className="bg-card rounded-lg border border-edge p-8 text-center">
             <p className="text-gray-400 text-sm">No draft has been created for this tournament yet.</p>
-            <p className="text-gray-500 text-xs mt-1">Go back and use &quot;Fetch Field &amp; Create Draft&quot; to get started.</p>
+            <p className="text-gray-500 text-xs mt-1">Go back and tap &quot;Play This Tournament&quot; to get started.</p>
           </div>
         )}
 
@@ -288,14 +279,25 @@ export default function TournamentSettingsPage() {
               </div>
             )}
 
-            {/* Save button at bottom */}
+            {/* Save button at bottom — for a pending draft it also goes live */}
             <button
-              onClick={saveAll}
+              onClick={draft.status === "pending" ? startDraft : saveAll}
               disabled={saving}
               className="w-full py-4 bg-brand text-black font-semibold text-sm rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save All Changes"}
+              {saving
+                ? draft.status === "pending"
+                  ? "Starting Draft..."
+                  : "Saving..."
+                : draft.status === "pending"
+                  ? "Save Changes & Start Draft"
+                  : "Save All Changes"}
             </button>
+            {draft.status === "pending" && (
+              <p className="text-gray-500 text-xs text-center -mt-2">
+                This takes the draft live — everyone in the league can start making picks.
+              </p>
+            )}
           </>
         )}
       </main>

@@ -53,11 +53,12 @@ Members claim their name when they join via the invite link.
 ## Commissioner runbook (per tournament)
 
 1. **~3 days before the first round** (once ESPN lists the field): League →
-   Manage League → the tournament's **Fetch Field & Create Draft**. This
-   builds 8 tiers × 10 golfers from ESPN's ordering — review the tiers in
-   the tier editor and adjust if anything looks off.
+   Manage League → the tournament's **Play This Tournament**. This builds
+   8 tiers × 10 golfers from ESPN's ordering — review the tiers in the
+   tier editor and adjust if anything looks off.
 2. Set a **Close Time** (recommended: 15–30 minutes before the first tee
-   time) and set the draft status to **open**.
+   time), then hit **Save Changes & Start Draft** — the draft goes live
+   and members can pick.
 3. Members visit the league page → **Draft Now** → one golfer per tier +
    tiebreaker guess. Watch the "picks in" counter and nag stragglers.
    Picks are private until the draft locks.
