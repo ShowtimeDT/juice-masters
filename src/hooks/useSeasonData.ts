@@ -10,6 +10,8 @@ import { calculateStandings } from "@/lib/scoring";
 interface LeagueMember {
   user_id: string;
   display_name: string;
+  team_name: string | null;
+  team_photo: string | null;
 }
 
 export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
@@ -81,6 +83,8 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
 
         return {
           owner: member.display_name,
+          teamName: member.team_name || member.display_name,
+          teamPhoto: member.team_photo ?? null,
           tournamentResults,
           totalScore,
           completedTournaments,

@@ -97,8 +97,26 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
                     </span>
                   </div>
 
-                  {/* Name */}
-                  <span className="text-white font-medium truncate">{standing.owner}</span>
+                  {/* Team photo + name */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="relative w-8 h-8 rounded-full overflow-hidden bg-avatar ring-1 ring-white/10 shrink-0">
+                      {standing.teamPhoto ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={standing.teamPhoto}
+                          alt={standing.teamName || standing.owner}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-gray-500 font-serif font-bold text-sm">
+                          {(standing.teamName || standing.owner)[0]?.toUpperCase()}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-white font-medium truncate">
+                      {standing.teamName || standing.owner}
+                    </span>
+                  </div>
 
                   {/* Per-tournament scores */}
                   {standing.tournamentResults.map((tr) => (

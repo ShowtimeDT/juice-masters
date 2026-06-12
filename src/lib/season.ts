@@ -12,6 +12,8 @@ export interface SeasonTournamentResult {
 
 export interface SeasonStanding {
   owner: string;
+  teamName?: string;
+  teamPhoto?: string | null;
   tournamentResults: SeasonTournamentResult[];
   totalScore: number;
   completedTournaments: number;
