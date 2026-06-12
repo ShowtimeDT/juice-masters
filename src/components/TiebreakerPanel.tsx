@@ -18,22 +18,22 @@ export default function TiebreakerPanel({
   });
 
   return (
-    <div className="bg-card rounded-lg border border-white/5 overflow-hidden">
+    <div className="bg-card rounded-lg border border-edge overflow-hidden">
       {/* Header */}
-      <div className="px-3 sm:px-4 py-3 border-b border-white/5 flex items-center justify-between">
+      <div className="px-3 sm:px-4 py-3 border-b border-edge flex items-center justify-between">
         <h2 className="text-white font-bold text-sm sm:text-base uppercase tracking-wide">
           Tiebreaker: Total Birdies
         </h2>
         <div className="flex items-center gap-2">
           <span className="text-gray-400 text-xs uppercase tracking-wider">Actual:</span>
-          <span className="text-white font-mono font-bold text-xl tabular-nums">
+          <span className="text-white font-mono font-bold text-xl">
             {actualBirdies}
           </span>
         </div>
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-faint font-semibold border-b border-white/5">
+      <div className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] px-3 sm:px-4 py-1.5 text-[10px] uppercase tracking-wider text-faint font-semibold border-b border-edge">
         <span>Player</span>
         <span className="text-right">Guess</span>
         <span className="text-right">Differential</span>
@@ -48,7 +48,7 @@ export default function TiebreakerPanel({
           return (
             <div
               key={standing.entry.id}
-              className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] items-center px-3 sm:px-4 py-4 text-sm border-b border-white/5 last:border-0"
+              className="grid grid-cols-[1fr_6rem_6rem] sm:grid-cols-[1fr_8rem_8rem] items-center px-3 sm:px-4 py-2.5 text-sm border-b border-white/5 last:border-0"
               style={
                 isClosest
                   ? { backgroundColor: `${accentColor}26` }
@@ -71,10 +71,10 @@ export default function TiebreakerPanel({
                   </span>
                 )}
               </div>
-              <span className="text-gray-300 font-mono tabular-nums text-right">
+              <span className="text-gray-300 font-mono text-right">
                 {standing.entry.tiebreakerGuess}
               </span>
-              <span className="text-gray-500 font-mono tabular-nums text-right">
+              <span className="text-gray-500 font-mono text-right">
                 {diff === 0 ? "exact" : diff > 0 ? `+${diff}` : diff.toString()}
               </span>
             </div>
