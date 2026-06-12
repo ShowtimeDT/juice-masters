@@ -125,7 +125,12 @@ export default function JoinLeaguePage() {
       <FullScreenCenter>
         <div className="bg-card rounded-lg border border-edge p-8 w-full max-w-sm mx-4">
           {showAuth ? (
-            <AuthForm onSuccess={() => window.location.reload()} />
+            // callbackUrl brings Google sign-ins back to this join page;
+            // email sign-ins reload in place via onSuccess.
+            <AuthForm
+              callbackUrl={`/league/${slug}/join/${code}`}
+              onSuccess={() => window.location.reload()}
+            />
           ) : (
             <div className="text-center">
               <h2 className="text-white font-serif text-2xl font-bold mb-2">Join League</h2>
