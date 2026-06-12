@@ -285,7 +285,7 @@ export default function ManageLeaguePage() {
                         disabled={fetching === config.id}
                         className="px-4 py-2 bg-green-600 text-white font-semibold text-xs rounded-lg hover:bg-green-500 transition-colors cursor-pointer disabled:opacity-50"
                       >
-                        {fetching === config.id ? "Fetching..." : "Fetch Field & Create Draft"}
+                        {fetching === config.id ? "Setting Up..." : "Play This Tournament"}
                       </button>
                     )}
                     {hasDraft && (
