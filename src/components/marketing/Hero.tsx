@@ -43,7 +43,16 @@ export default function Hero() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,13,12,0.55) 0%, rgba(10,13,12,0.4) 45%, var(--color-surface) 100%)",
+            "linear-gradient(to bottom, rgba(10,13,12,0.6) 0%, rgba(10,13,12,0.5) 45%, var(--color-surface) 100%)",
+        }}
+      />
+
+      {/* Extra scrim focused behind the text column */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(60% 70% at 50% 48%, rgba(10,13,12,0.45), transparent 75%)",
         }}
       />
 
@@ -51,7 +60,16 @@ export default function Hero() {
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(55% 60% at 50% 32%, ${withAlpha(mastersGreen, 0.15)}, transparent 70%)`,
+          background: `radial-gradient(55% 60% at 50% 32%, ${withAlpha(mastersGreen, 0.12)}, transparent 70%)`,
+        }}
+      />
+
+      {/* Film grain — masks upscaling softness on large screens */}
+      <div
+        className="absolute inset-0 opacity-[0.12] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E\")",
         }}
       />
 
@@ -64,13 +82,13 @@ export default function Hero() {
           className="mx-auto drop-shadow-lg w-[90px] h-[104px] sm:w-[130px] sm:h-[150px]"
           priority
         />
-        <h1 className="mt-4 text-4xl sm:text-6xl font-serif font-bold text-white uppercase tracking-[0.18em]">
+        <h1 className="mt-4 text-4xl sm:text-6xl font-serif font-bold text-white uppercase tracking-[0.18em] text-shadow-hero">
           Juice Tour
         </h1>
-        <p className="mt-3 text-xs uppercase tracking-[0.1em] text-brand font-medium">
+        <p className="mt-3 text-xs uppercase tracking-[0.1em] text-brand font-medium text-shadow-hero">
           Fantasy golf for the majors
         </p>
-        <p className="mt-5 max-w-2xl mx-auto text-gray-400 text-sm sm:text-base">
+        <p className="mt-5 max-w-2xl mx-auto text-gray-200 text-sm sm:text-base text-shadow-hero">
           Draft a team of 8 pros with your friends before each major, then sweat
           every putt together. Live scoring all weekend, season-long bragging
           rights, zero spreadsheets.
