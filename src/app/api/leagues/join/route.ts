@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/db";
 import { requireUser, authzError } from "@/lib/authz";
 
+type DbRow = Record<string, unknown>;
+
 /**
- * Join a league by invite code. Pass claimMemberId to take over an
- * unclaimed historical member slot (display name + past results) instead
- * of joining as a brand-new member.
+ * Two ways in:
+ * - inviteCode (the link) — works for public and private leagues, and is
+ *   the only path that supports claiming a historical member slot.
+ * - leagueRef + password — private leagues only; the league id/slug plus
+ *   the commissioner-set league password.
  */
 export async function POST(request: NextRequest) {
   const user = await requireUser();
@@ -14,15 +19,39 @@ export async function POST(request: NextRequest) {
   const sql = getDb();
 
   try {
-    const { inviteCode, claimMemberId } = await request.json();
-    if (!inviteCode?.trim()) {
-      return NextResponse.json({ error: "Invite code is required" }, { status: 400 });
+    const { inviteCode, claimMemberId, leagueRef, password } = await request.json();
+
+    let league: DbRow | undefined;
+
+    if (inviteCode?.trim()) {
+      [league] = await sql`SELECT * FROM leagues WHERE invite_code = ${inviteCode.trim()}`;
+      if (!league) {
+        return NextResponse.json({ error: "Invalid invite code" }, { status: 404 });
+      }
+    } else if (leagueRef?.trim() && typeof password === "string") {
+      // Generic error for every failure mode so the join box can't be used
+      // to probe which leagues exist.
+      const badCombo = NextResponse.json(
+        { error: "League and password don't match" },
+        { status: 403 }
+      );
+      const ref = leagueRef.trim();
+      const [candidate] = await sql`
+        SELECT * FROM leagues WHERE slug = ${ref} OR id::text = ${ref}
+      `;
+      if (!candidate || !candidate.is_private || !candidate.password_hash) return badCombo;
+      const ok = await bcrypt.compare(password, candidate.password_hash as string);
+      if (!ok) return badCombo;
+      league = candidate;
+    } else {
+      return NextResponse.json(
+        { error: "An invite code, or a league and password, is required" },
+        { status: 400 }
+      );
     }
 
-    const [league] = await sql`SELECT * FROM leagues WHERE invite_code = ${inviteCode.trim()}`;
-    if (!league) {
-      return NextResponse.json({ error: "Invalid invite code" }, { status: 404 });
-    }
+    // The hash never leaves the server.
+    delete league.password_hash;
 
     // Already a member?
     const [existing] = await sql`

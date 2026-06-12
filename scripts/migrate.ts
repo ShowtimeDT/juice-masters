@@ -156,6 +156,9 @@ async function migrate(): Promise<void> {
     sql`ALTER TABLE draft_members ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id)`,
     // Team pictures: small client-resized JPEGs stored as data URLs.
     sql`ALTER TABLE league_members ADD COLUMN IF NOT EXISTS team_photo TEXT`,
+    // Public/private leagues; private leagues carry a bcrypt password hash.
+    sql`ALTER TABLE leagues ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE`,
+    sql`ALTER TABLE leagues ADD COLUMN IF NOT EXISTS password_hash TEXT`,
   ];
   for (const alter of alters) {
     try {
@@ -164,6 +167,21 @@ async function migrate(): Promise<void> {
       console.warn("Skipped:", (e as Error).message);
     }
   }
+
+  // League chat: permanent bulletin board, members-only.
+  await sql`
+    CREATE TABLE IF NOT EXISTS league_messages (
+      id SERIAL PRIMARY KEY,
+      league_id UUID NOT NULL REFERENCES leagues(id),
+      user_id UUID NOT NULL REFERENCES users(id),
+      body TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS league_messages_league_idx
+    ON league_messages (league_id, id)
+  `;
 
   // Case-insensitive email uniqueness (signup/login normalize to lowercase).
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_idx ON users (lower(email))`;

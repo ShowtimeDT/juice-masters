@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { canViewLeagueById } from "@/lib/authz";
 import { isPastDeadline } from "@/lib/draft/deadline";
 
 export async function GET(
@@ -12,6 +13,11 @@ export async function GET(
   const sql = getDb();
 
   try {
+    // Private leagues hide their drafts/standings from outsiders.
+    if (leagueId && !(await canViewLeagueById(leagueId))) {
+      return NextResponse.json({ error: "This league is private", private: true }, { status: 403 });
+    }
+
     let drafts;
     if (leagueId) {
       drafts = await sql`

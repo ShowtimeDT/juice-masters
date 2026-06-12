@@ -15,7 +15,7 @@ interface LeagueMember {
 }
 
 interface LeagueData {
-  league: { id: string; name: string; slug: string; commissioner_id: string; invite_code: string };
+  league: { id: string; name: string; slug: string; commissioner_id: string; invite_code: string; is_private?: boolean };
   members: LeagueMember[];
 }
 
@@ -49,6 +49,9 @@ export default function ManageLeaguePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState<string | null>(null);
+  const [privacySaving, setPrivacySaving] = useState(false);
+  const [privacyPassword, setPrivacyPassword] = useState("");
+  const [privacyError, setPrivacyError] = useState("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -78,6 +81,33 @@ export default function ManageLeaguePage() {
     if (authStatus === "authenticated") fetchData();
     else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
   }, [authStatus, fetchData, router, slug]);
+
+  const savePrivacy = async (isPrivate: boolean) => {
+    if (!leagueData) return;
+    setPrivacySaving(true);
+    setPrivacyError("");
+    try {
+      const res = await fetch("/api/leagues/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          league_id: leagueData.league.id,
+          is_private: isPrivate,
+          password: privacyPassword.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPrivacyError(data.error || "Failed to save");
+      } else {
+        setPrivacyPassword("");
+        fetchData();
+      }
+    } catch {
+      setPrivacyError("Failed to save");
+    }
+    setPrivacySaving(false);
+  };
 
   const unlinkMember = async (member: LeagueMember) => {
     if (!leagueData) return;
@@ -197,6 +227,57 @@ export default function ManageLeaguePage() {
           <p className="text-gray-500 text-xs mt-2">
             {leagueData.members.length} member{leagueData.members.length !== 1 ? "s" : ""} in league
           </p>
+        </div>
+
+        {/* Privacy */}
+        <div className="bg-card rounded-lg border border-edge p-4">
+          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-1">League Privacy</h2>
+          <p className="text-gray-500 text-xs mb-3">
+            {leagueData.league.is_private
+              ? "Private — only members can see this league. The invite link still works; joining by league ID requires the password."
+              : "Public — anyone with the link can view standings. Only members can chat or play."}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="password"
+              value={privacyPassword}
+              onChange={(e) => setPrivacyPassword(e.target.value)}
+              placeholder={
+                leagueData.league.is_private
+                  ? "New league password (optional)"
+                  : "League password (required to go private)"
+              }
+              maxLength={72}
+              className="flex-1 min-w-[14rem] bg-card-inset border border-edge rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand"
+            />
+            {leagueData.league.is_private ? (
+              <>
+                <button
+                  onClick={() => savePrivacy(true)}
+                  disabled={privacySaving || !privacyPassword.trim()}
+                  className="px-4 py-2 bg-card-inset border border-edge text-gray-300 font-semibold text-xs rounded-lg hover:border-brand transition-colors cursor-pointer disabled:opacity-40"
+                >
+                  Update Password
+                </button>
+                <button
+                  onClick={() => savePrivacy(false)}
+                  disabled={privacySaving}
+                  className="px-4 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Make Public
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => savePrivacy(true)}
+                disabled={privacySaving}
+                className="px-4 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Make Private
+              </button>
+            )}
+          </div>
+          {privacyError && <p className="text-red-400 text-xs mt-2">{privacyError}</p>}
         </div>
 
         {/* Members */}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { canViewLeagueById } from "@/lib/authz";
 import { Entry } from "@/lib/types";
 
 export async function GET(
@@ -13,6 +14,11 @@ export async function GET(
     const [draft] = await sql`SELECT * FROM drafts WHERE id = ${draftId}`;
     if (!draft || draft.status !== "locked") {
       return NextResponse.json({ error: "Draft is not locked" }, { status: 400 });
+    }
+
+    // Private leagues hide their drafts from outsiders.
+    if (draft.league_id && !(await canViewLeagueById(draft.league_id as string))) {
+      return NextResponse.json({ error: "This league is private", private: true }, { status: 403 });
     }
 
     const picks = await sql`

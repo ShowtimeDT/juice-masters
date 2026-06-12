@@ -42,7 +42,7 @@ export default function JoinLeaguePage() {
   // claim their name (and their past results) instead of joining as new.
   const loadMembers = useCallback(async () => {
     try {
-      const res = await fetch(`/api/leagues/${slug}`);
+      const res = await fetch(`/api/leagues/${slug}?code=${encodeURIComponent(code)}`);
       if (!res.ok) {
         setUnclaimed([]);
         return;
@@ -53,7 +53,7 @@ export default function JoinLeaguePage() {
     } catch {
       setUnclaimed([]);
     }
-  }, [slug]);
+  }, [slug, code]);
 
   useEffect(() => {
     if (status === "authenticated" && unclaimed === null) {

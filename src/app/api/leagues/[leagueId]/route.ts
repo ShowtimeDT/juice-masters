@@ -3,11 +3,12 @@ import { getDb } from "@/lib/db";
 import {
   isLeagueMemberOrCommissioner,
   requireLeagueCommissioner,
+  canViewLeague,
   authzError,
 } from "@/lib/authz";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ leagueId: string }> }
 ) {
   const { leagueId } = await params;
@@ -22,6 +23,13 @@ export async function GET(
       return NextResponse.json({ error: "League not found" }, { status: 404 });
     }
 
+    // Private leagues are invisible to outsiders. The join page passes the
+    // invite code from its URL so invited visitors can still see it.
+    const code = request.nextUrl.searchParams.get("code");
+    if (!(await canViewLeague(league, code))) {
+      return NextResponse.json({ error: "This league is private", private: true }, { status: 403 });
+    }
+
     // No emails; LEFT JOIN so unclaimed historical members still appear.
     const members = await sql`
       SELECT lm.id, lm.league_id, lm.user_id, lm.display_name, lm.team_name,
@@ -32,7 +40,9 @@ export async function GET(
       ORDER BY lm.joined_at
     `;
 
-    // The invite code is for members to share — don't hand it to strangers.
+    // The password hash never leaves the server; the invite code is for
+    // members to share — don't hand it to strangers.
+    delete league.password_hash;
     if (!(await isLeagueMemberOrCommissioner(league.id as string))) {
       delete league.invite_code;
     }
