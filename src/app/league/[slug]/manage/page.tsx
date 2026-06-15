@@ -102,6 +102,33 @@ export default function ManageLeaguePage() {
     }
   };
 
+  const removeMember = async (member: LeagueMember) => {
+    if (!leagueData) return;
+    if (
+      !confirm(
+        `Remove ${member.display_name} from the league? This erases their picks ` +
+          `and scores from every major and can't be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/leagues/members/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ league_id: leagueData.league.id, member_id: member.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to remove member");
+        return;
+      }
+      fetchData();
+    } catch {
+      alert("Failed to remove member");
+    }
+  };
+
   const deleteLeague = async () => {
     if (!leagueData) return;
     const typed = prompt(
@@ -213,6 +240,10 @@ export default function ManageLeaguePage() {
             <h2 className="text-white font-bold text-sm uppercase tracking-wide">Members</h2>
             <p className="text-gray-500 text-xs mt-1">
               Unclaimed members appear when someone joins via the invite link and can claim their name.
+              <span className="block mt-0.5">
+                <span className="text-gray-400">Unlink</span> frees a slot so the right person can re-claim it.{" "}
+                <span className="text-gray-400">Remove</span> deletes the member and erases their picks everywhere.
+              </span>
             </p>
           </div>
           <div>
@@ -231,21 +262,29 @@ export default function ManageLeaguePage() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   {member.user_id ? (
+                    <span className="text-green-400 text-xs">
+                      Claimed{member.username ? ` — @${member.username}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 text-xs">Unclaimed</span>
+                  )}
+                  {member.user_id !== leagueData.league.commissioner_id && (
                     <>
-                      <span className="text-green-400 text-xs">
-                        Claimed{member.username ? ` — @${member.username}` : ""}
-                      </span>
-                      {member.user_id !== leagueData.league.commissioner_id && (
+                      {member.user_id && (
                         <button
                           onClick={() => unlinkMember(member)}
-                          className="text-gray-500 text-xs hover:text-red-400 transition-colors cursor-pointer"
+                          className="text-gray-500 text-xs hover:text-white transition-colors cursor-pointer"
                         >
                           Unlink
                         </button>
                       )}
+                      <button
+                        onClick={() => removeMember(member)}
+                        className="text-gray-500 text-xs hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        Remove
+                      </button>
                     </>
-                  ) : (
-                    <span className="text-gray-500 text-xs">Unclaimed</span>
                   )}
                 </div>
               </div>
