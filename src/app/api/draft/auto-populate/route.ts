@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { TOURNAMENTS } from "@/lib/tournaments";
+import { fetchOddsField } from "@/lib/odds-field";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard";
 const NUM_TIERS = 8;
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
     }
 
-    // Fetch ESPN field
+    // Fetch ESPN field (preferred — carries athlete ids + exact names)
     const espnUrl = `${ESPN_BASE}?dates=${tournament.espnDatesParam}`;
     const espnRes = await fetch(espnUrl);
     const espnData = await espnRes.json();
@@ -47,20 +48,34 @@ export async function POST(request: NextRequest) {
     const event = espnData.events?.[0];
     const competitors = event?.competitions?.[0]?.competitors || [];
 
-    if (competitors.length < 10) {
+    // Ranked field as { name, espn_id }. ESPN first; if it hasn't posted the
+    // field yet (common until pairings finalize), fall back to The Odds API's
+    // outright market — names + ranking only, no odds stored or shown.
+    let rankedField: { name: string; espn_id: string }[] = [];
+
+    if (competitors.length >= 10) {
+      rankedField = [...competitors]
+        .sort((a: { order: number }, b: { order: number }) => (a.order || 999) - (b.order || 999))
+        .map((comp: { athlete?: { displayName?: string; fullName?: string }; id?: number | string }) => ({
+          name: comp.athlete?.displayName || comp.athlete?.fullName || "Unknown",
+          espn_id: comp.id?.toString() || "",
+        }));
+    } else {
+      // espn_id stays "" — headshots resolve later by name-matching the live
+      // ESPN field at standings time.
+      const oddsNames = await fetchOddsField(tournament.oddsApiSportKey);
+      rankedField = oddsNames.map((name) => ({ name, espn_id: "" }));
+    }
+
+    if (rankedField.length < 10) {
       return NextResponse.json({
-        error: "Field not available yet on ESPN. Try again later.",
-        competitorCount: competitors.length,
+        error: "Field not available yet. Try again closer to the tournament.",
+        competitorCount: rankedField.length,
       }, { status: 400 });
     }
 
-    // Sort by order (ESPN ranking/odds order)
-    const sorted = [...competitors].sort(
-      (a: { order: number }, b: { order: number }) => (a.order || 999) - (b.order || 999)
-    );
-
-    // Take top 80 golfers by odds/ranking
-    const topGolfers = sorted.slice(0, MAX_GOLFERS);
+    // Take top 80 by ranking
+    const topGolfers = rankedField.slice(0, MAX_GOLFERS);
 
     // Build tier assignments: 10 golfers per tier
     const tiers: { tier_number: number; name: string }[] = [];
@@ -74,11 +89,10 @@ export async function POST(request: NextRequest) {
       });
 
       for (let g = 0; g < GOLFERS_PER_TIER && idx < topGolfers.length; g++) {
-        const comp = topGolfers[idx];
         golfers.push({
           tier_number: t,
-          name: comp.athlete?.displayName || comp.athlete?.fullName || "Unknown",
-          espn_id: comp.id?.toString() || "",
+          name: topGolfers[idx].name,
+          espn_id: topGolfers[idx].espn_id,
         });
         idx++;
       }
@@ -129,7 +143,7 @@ export async function POST(request: NextRequest) {
       draft,
       tiers: dbTiers,
       golfers: dbGolfers,
-      competitorCount: competitors.length,
+      competitorCount: rankedField.length,
     });
   } catch (error) {
     console.error("Auto-populate error:", error);

@@ -24,6 +24,7 @@ export interface TournamentConfig {
   dates: string; // human-readable ("Jun 18–21, 2026")
   dateRange: string; // compact ("June 18-21")
   espnDatesParam: string; // ESPN scoreboard ?dates= value
+  oddsApiSportKey: string; // The Odds API sport key for the field fallback ("" = none)
   venue: string;
   theme: TournamentTheme;
   hasEntries: boolean; // static entries exist in src/lib/entries/
@@ -108,6 +109,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     dates: "Apr 9–12, 2026",
     dateRange: "April 9-12",
     espnDatesParam: "20260409-20260412",
+    oddsApiSportKey: "golf_masters_tournament_winner",
     venue: "Augusta National Golf Club",
     theme: mastersTheme,
     hasEntries: false,
@@ -122,6 +124,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     dates: "May 14–17, 2026",
     dateRange: "May 14-17",
     espnDatesParam: "20260514-20260517",
+    oddsApiSportKey: "golf_pga_championship_winner",
     venue: "Aronimink Golf Club",
     theme: pgaTheme,
     hasEntries: false,
@@ -136,6 +139,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     dates: "Jun 18–21, 2026",
     dateRange: "June 18-21",
     espnDatesParam: "20260618-20260621",
+    oddsApiSportKey: "golf_us_open_winner",
     venue: "Shinnecock Hills Golf Club",
     theme: usOpenTheme,
     hasEntries: false,
@@ -152,6 +156,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     dates: "Jul 16–19, 2026",
     dateRange: "July 16-19",
     espnDatesParam: "20260716-20260719",
+    oddsApiSportKey: "golf_the_open_championship_winner",
     venue: "Royal Portrush Golf Club",
     theme: theOpenTheme,
     hasEntries: false,
@@ -166,6 +171,7 @@ export const TOURNAMENTS: TournamentConfig[] = [
     dates: "2026 Season",
     dateRange: "Apr–Jul 2026",
     espnDatesParam: "",
+    oddsApiSportKey: "",
     venue: "",
     theme: seasonTheme,
     hasEntries: false,
