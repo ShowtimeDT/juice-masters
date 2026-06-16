@@ -40,31 +40,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
     }
 
-    // Fetch ESPN field (preferred — carries athlete ids + exact names)
-    const espnUrl = `${ESPN_BASE}?dates=${tournament.espnDatesParam}`;
-    const espnRes = await fetch(espnUrl);
-    const espnData = await espnRes.json();
-
-    const event = espnData.events?.[0];
-    const competitors = event?.competitions?.[0]?.competitors || [];
-
-    // Ranked field as { name, espn_id }. ESPN first; if it hasn't posted the
-    // field yet (common until pairings finalize), fall back to The Odds API's
-    // outright market — names + ranking only, no odds stored or shown.
+    // Ranked field as { name, espn_id }, favorites-first for tiering.
+    //
+    // The Odds API is PRIMARY: its outright-winner market is the only source
+    // with a real odds ranking. We use names + ranking only — no odds values
+    // are stored or shown. espn_id stays "" here; headshots + scores resolve
+    // at standings time by name-matching the live ESPN field.
+    //
+    // ESPN's field is the FALLBACK only (no key / market closed). Note: ESPN's
+    // `order` field is NOT an odds ranking — pre-tournament it's registration/
+    // athlete-id order — so an ESPN-sourced field comes out roughly ordered and
+    // the commissioner should sanity-check the tiers in the editor.
     let rankedField: { name: string; espn_id: string }[] = [];
 
-    if (competitors.length >= 10) {
+    const oddsNames = await fetchOddsField(tournament.oddsApiSportKey);
+    if (oddsNames.length >= 10) {
+      rankedField = oddsNames.map((name) => ({ name, espn_id: "" }));
+    } else {
+      const espnUrl = `${ESPN_BASE}?dates=${tournament.espnDatesParam}`;
+      const espnRes = await fetch(espnUrl);
+      const espnData = await espnRes.json();
+      const event = espnData.events?.[0];
+      const competitors = event?.competitions?.[0]?.competitors || [];
       rankedField = [...competitors]
         .sort((a: { order: number }, b: { order: number }) => (a.order || 999) - (b.order || 999))
         .map((comp: { athlete?: { displayName?: string; fullName?: string }; id?: number | string }) => ({
           name: comp.athlete?.displayName || comp.athlete?.fullName || "Unknown",
           espn_id: comp.id?.toString() || "",
         }));
-    } else {
-      // espn_id stays "" — headshots resolve later by name-matching the live
-      // ESPN field at standings time.
-      const oddsNames = await fetchOddsField(tournament.oddsApiSportKey);
-      rankedField = oddsNames.map((name) => ({ name, espn_id: "" }));
     }
 
     if (rankedField.length < 10) {
