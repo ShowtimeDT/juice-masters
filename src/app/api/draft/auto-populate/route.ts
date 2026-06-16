@@ -56,7 +56,27 @@ export async function POST(request: NextRequest) {
     const oddsNames = await fetchOddsField(tournament.oddsApiSportKey);
     if (oddsNames.length >= 10) {
       rankedField = oddsNames.map((name) => ({ name, espn_id: "" }));
+    } else if (tournament.oddsApiSportKey) {
+      // This major HAS an odds market configured, but the Odds API returned
+      // nothing — almost always a missing/invalid ODDS_API_KEY. Do NOT fall
+      // back to ESPN's field here: ESPN's `order` is not odds-ranked, so it
+      // would produce silently-scrambled tiers. Fail loud instead.
+      console.error(
+        `[auto-populate] Odds source returned ${oddsNames.length} for ${tournament.id} ` +
+          "(oddsApiSportKey set). Refusing ESPN fallback to avoid scrambled tiers. " +
+          "Check ODDS_API_KEY in the Production environment."
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Couldn't load the player field from the odds source. The draft was NOT " +
+            "created. Please try again in a minute — if it keeps failing, the odds API " +
+            "key may be misconfigured.",
+        },
+        { status: 503 }
+      );
     } else {
+      // Tournament with no odds market configured — fall back to ESPN's field.
       const espnUrl = `${ESPN_BASE}?dates=${tournament.espnDatesParam}`;
       const espnRes = await fetch(espnUrl);
       const espnData = await espnRes.json();
