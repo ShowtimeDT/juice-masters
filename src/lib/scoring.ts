@@ -1,22 +1,42 @@
 import { Entry, EntryStanding, GolferScore, GolferScoreWithCounting, TournamentData } from "./types";
-import { resolveGolferName } from "./entries/index";
+import { resolveGolferName, normalizeGolferName } from "./entries/aliases";
 
 const CUT_PENALTY = 10;
 const COUNTING_GOLFERS = 5;
+
+/** Last name + first initial, normalized — for the fuzzy fallback match. */
+function lastNamePlusInitial(name: string): { last: string; initial: string } {
+  const parts = normalizeGolferName(name).split(" ").filter(Boolean);
+  if (parts.length === 0) return { last: "", initial: "" };
+  return { last: parts[parts.length - 1], initial: parts[0][0] ?? "" };
+}
 
 export function getGolferScore(
   golferName: string,
   golferScores: Map<string, GolferScore>
 ): GolferScore {
+  // 1. Explicit alias, then exact match on ESPN's name.
   const resolved = resolveGolferName(golferName);
-  const score = golferScores.get(resolved);
-  if (score) return score;
+  const exact = golferScores.get(resolved);
+  if (exact) return exact;
 
-  // Try case-insensitive match
-  for (const [key, value] of golferScores.entries()) {
-    if (key.toLowerCase() === resolved.toLowerCase()) {
-      return value;
+  // 2. Accent/punctuation/case-insensitive match (Åberg≈Aberg, J.J.≈JJ).
+  const target = normalizeGolferName(resolved);
+  for (const value of golferScores.values()) {
+    if (normalizeGolferName(value.name) === target) return value;
+  }
+
+  // 3. Last name + first initial, but ONLY when exactly one ESPN golfer
+  //    qualifies — handles "Christopher Gotterup"→"Chris Gotterup" without
+  //    risking a wrong match among shared surnames (Kim, Fitzpatrick…).
+  const { last, initial } = lastNamePlusInitial(resolved);
+  if (last && initial) {
+    const candidates: GolferScore[] = [];
+    for (const value of golferScores.values()) {
+      const c = lastNamePlusInitial(value.name);
+      if (c.last === last && c.initial === initial) candidates.push(value);
     }
+    if (candidates.length === 1) return candidates[0];
   }
 
   // Not found — placeholder that scores Even. Loud warning because an
