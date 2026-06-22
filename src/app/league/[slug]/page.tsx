@@ -11,8 +11,9 @@ import AccountMenu from "@/components/AccountMenu";
 import NotificationBell from "@/components/ui/NotificationBell";
 import MyTeam from "@/components/team/MyTeam";
 import LeagueChat from "@/components/chat/LeagueChat";
-import { defaultTournamentTab, defaultMyTeamMajor } from "@/lib/tournament-state";
+import { defaultTournamentTab } from "@/lib/tournament-state";
 import DraftAwareTournament from "@/components/DraftAwareTournament";
+import EventHeader from "@/components/EventHeader";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 
 interface LeagueInfo {
@@ -213,18 +214,15 @@ function LeagueContent() {
         {activeView === "standings" &&
           (config.id === "season" ? (
             <div className="min-h-screen bg-surface">
-              <div className="max-w-[1080px] mx-auto px-6 pt-6">
-                <button
-                  onClick={() => handleTabSelect(defaultMyTeamMajor())}
-                  className="inline-flex items-center gap-2 text-sm text-gold2 hover:text-ink transition-colors"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Back to {getTournament(defaultMyTeamMajor()).shortName}
-                </button>
-              </div>
-              <SeasonLeaderboard leagueId={leagueData.league.id} />
+              {/* Keep the major navigator on screen — the Season button glows
+                  gold while active; the arrows/dots jump back to any major. */}
+              <EventHeader
+                config={config}
+                seasonActive
+                onSelectMajor={handleTabSelect}
+                onSeasonStandings={() => handleTabSelect("season")}
+              />
+              <SeasonLeaderboard leagueId={leagueData.league.id} hideHero />
             </div>
           ) : (
             <DraftAwareTournament

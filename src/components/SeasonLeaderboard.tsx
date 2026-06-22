@@ -33,6 +33,8 @@ function MajorCell({ score }: { score: number | null }) {
 
 interface SeasonLeaderboardProps {
   leagueId?: string;
+  /** Skip the built-in hero when rendered under the persistent EventHeader. */
+  hideHero?: boolean;
 }
 
 /** Centered serif hero matching the Season Standings design (no back nav — the
@@ -62,7 +64,7 @@ function SeasonHero() {
 const COLS =
   "grid-cols-[34px_minmax(0,1fr)_64px] sm:grid-cols-[42px_minmax(0,1fr)_62px_62px_72px_72px_84px]";
 
-export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) {
+export default function SeasonLeaderboard({ leagueId, hideHero = false }: SeasonLeaderboardProps) {
   const { standings, isLoading, lastUpdated, error, refresh } = useSeasonData(leagueId);
   const { data: session } = useSession();
   const myName = session?.user?.name ?? null;
@@ -72,7 +74,7 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
   if (isLoading && standings.length === 0) {
     return (
       <div>
-        <SeasonHero />
+        {!hideHero && <SeasonHero />}
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="inline-block w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mb-4" />
@@ -85,7 +87,7 @@ export default function SeasonLeaderboard({ leagueId }: SeasonLeaderboardProps) 
 
   return (
     <div>
-      <SeasonHero />
+      {!hideHero && <SeasonHero />}
 
       {error && (
         <div className="max-w-[980px] mx-auto px-6 mt-4">

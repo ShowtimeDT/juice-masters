@@ -10,9 +10,14 @@ interface EventHeaderProps {
   subStatus?: string;
   /** Show the sage "Live" pulse in the sub line. */
   isLive?: boolean;
+  /**
+   * Season standings is the active view. The major navigator stays on screen
+   * (arrows + dots) so you can jump back to any major; the Season button glows.
+   */
+  seasonActive?: boolean;
   /** Page between majors (the ← venue → arrows and the progress dots). */
   onSelectMajor?: (id: TournamentId) => void;
-  /** Jump to the season standings view. */
+  /** Toggle the season standings view. */
   onSeasonStandings?: () => void;
 }
 
@@ -28,12 +33,16 @@ export default function EventHeader({
   config,
   subStatus,
   isLive = false,
+  seasonActive = false,
   onSelectMajor,
   onSeasonStandings,
 }: EventHeaderProps) {
   const idx = MAJORS.findIndex((m) => m.id === config.id);
-  const prev = idx > 0 ? MAJORS[idx - 1] : null;
-  const next = idx >= 0 && idx < MAJORS.length - 1 ? MAJORS[idx + 1] : null;
+  // In season mode there's no current major, so the navigator sits "after" the
+  // last major: the back arrow steps into The Open, the forward arrow is spent.
+  const navIdx = seasonActive ? MAJORS.length : idx;
+  const prev = navIdx > 0 ? MAJORS[navIdx - 1] : null;
+  const next = navIdx >= 0 && navIdx < MAJORS.length - 1 ? MAJORS[navIdx + 1] : null;
 
   return (
     <section className="relative text-center overflow-hidden border-b border-edge px-6 pt-12 pb-11">
@@ -54,7 +63,7 @@ export default function EventHeader({
 
       <div className="relative">
         <div className="eyebrow !tracking-[4px]">
-          {idx >= 0 ? `Major ${ROMAN[idx]} of ${MAJORS.length}` : "Season"}
+          {seasonActive ? "2026 · All four majors" : idx >= 0 ? `Major ${ROMAN[idx]} of ${MAJORS.length}` : "Season"}
         </div>
 
         {/* major switcher */}
@@ -73,7 +82,7 @@ export default function EventHeader({
 
           <div className="min-w-0">
             <h1 className="font-serif font-medium text-ink leading-none text-[clamp(34px,6vw,64px)] whitespace-nowrap truncate">
-              {venueTitle(config.venue) || config.shortName}
+              {seasonActive ? "Season Standings" : venueTitle(config.venue) || config.shortName}
             </h1>
           </div>
 
@@ -92,21 +101,27 @@ export default function EventHeader({
 
         {/* sub line */}
         <div className="mt-3 text-[13.5px] tracking-[0.4px] text-muted">
-          {isLive && (
-            <span className="inline-flex items-center gap-1.5 text-sage mr-2.5">
-              <i className="w-[7px] h-[7px] rounded-full bg-sage shadow-[0_0_0_3px_rgba(156,203,134,0.2)]" />
-              Live
-            </span>
+          {seasonActive ? (
+            "Every score across all four majors"
+          ) : (
+            <>
+              {isLive && (
+                <span className="inline-flex items-center gap-1.5 text-sage mr-2.5">
+                  <i className="w-[7px] h-[7px] rounded-full bg-sage shadow-[0_0_0_3px_rgba(156,203,134,0.2)]" />
+                  Live
+                </span>
+              )}
+              {config.shortName}
+              {subStatus ? ` · ${subStatus}` : ""}
+            </>
           )}
-          {config.shortName}
-          {subStatus ? ` · ${subStatus}` : ""}
         </div>
 
-        {/* progress dots + season standings */}
+        {/* progress dots + season standings toggle */}
         <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-3 mt-5">
           <div className="flex items-center gap-2.5">
             {MAJORS.map((m) => {
-              const isOn = m.id === config.id;
+              const isOn = !seasonActive && m.id === config.id;
               const done = !isOn && getTournamentState(m) === "completed";
               return (
                 <button
@@ -118,8 +133,8 @@ export default function EventHeader({
                     isOn
                       ? "w-2 h-2 bg-gold shadow-[0_0_0_3px_rgba(201,162,75,0.18)]"
                       : done
-                        ? "w-[7px] h-[7px] bg-muted"
-                        : "w-[7px] h-[7px] bg-edge"
+                        ? "w-[7px] h-[7px] bg-muted hover:bg-gold"
+                        : "w-[7px] h-[7px] bg-edge hover:bg-gold"
                   }`}
                 />
               );
@@ -132,7 +147,11 @@ export default function EventHeader({
               <button
                 type="button"
                 onClick={onSeasonStandings}
-                className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-goldsoft text-gold2 px-4 py-2 text-[12.5px] font-medium tracking-[0.4px] hover:border-gold hover:bg-gold/15 transition-colors"
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium tracking-[0.4px] border transition-colors ${
+                  seasonActive
+                    ? "border-gold bg-goldsoft text-gold2 shadow-[0_0_18px_rgba(201,162,75,0.28)]"
+                    : "border-edge text-muted hover:border-gold/50 hover:text-gold2"
+                }`}
               >
                 Season Standings
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
