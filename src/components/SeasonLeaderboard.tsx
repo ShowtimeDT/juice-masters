@@ -13,12 +13,24 @@ const LIVE_MAJOR: TournamentId | null =
   TOURNAMENT_COLUMNS.find((t) => getTournamentState(t) === "in-progress")?.id ?? null;
 
 /** Per-major score, or a faint em dash when that major hasn't been played.
- *  Hidden on narrow screens (the design collapses to rank/team/total). */
-function MajorCell({ score }: { score: number | null }) {
+ *  A missed major (penalty) renders in rose with a "*" mark so it reads
+ *  differently from a real over-par score. Hidden on narrow screens. */
+function MajorCell({ score, penalty }: { score: number | null; penalty?: boolean }) {
   if (score === null) {
     return (
       <span className="hidden sm:block text-center tnum text-[14px] font-normal text-faint">
         —
+      </span>
+    );
+  }
+  if (penalty) {
+    return (
+      <span
+        className="hidden sm:block text-center tnum text-[14px] font-medium text-rose italic"
+        title="Missed this major — scored the worst team's total + 5"
+      >
+        {formatScore(score)}
+        <sup className="not-italic text-gold2 ml-px">*</sup>
       </span>
     );
   }
@@ -70,6 +82,7 @@ export default function SeasonLeaderboard({ leagueId, hideHero = false }: Season
   const myName = session?.user?.name ?? null;
 
   const liveLabel = LIVE_MAJOR ? getTournament(LIVE_MAJOR).shortName : null;
+  const hasPenalty = standings.some((s) => s.tournamentResults.some((r) => r.isPenalty));
 
   if (isLoading && standings.length === 0) {
     return (
@@ -193,7 +206,7 @@ export default function SeasonLeaderboard({ leagueId, hideHero = false }: Season
 
               {/* Per-major scores */}
               {standing.tournamentResults.map((tr) => (
-                <MajorCell key={tr.tournamentId} score={tr.countingScore} />
+                <MajorCell key={tr.tournamentId} score={tr.countingScore} penalty={tr.isPenalty} />
               ))}
 
               {/* Season total */}
@@ -211,6 +224,15 @@ export default function SeasonLeaderboard({ leagueId, hideHero = false }: Season
             </div>
           );
         })}
+
+        {hasPenalty && (
+          <div className="flex items-center justify-center gap-2 pt-5 text-[11.5px] text-muted">
+            <span className="text-rose italic">
+              –9<sup className="not-italic text-gold2">*</sup>
+            </span>
+            <span>= missed that major (scored the worst team&apos;s total + 5)</span>
+          </div>
+        )}
 
         <footer className="flex items-center justify-center gap-3 text-faint text-[11px] tracking-[0.3px] pt-6">
           <button

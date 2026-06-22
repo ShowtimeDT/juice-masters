@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { TournamentId, TOURNAMENTS } from "@/lib/tournaments";
 import { fetchTournamentData } from "@/lib/espn";
 import { Entry, TournamentData } from "@/lib/types";
-import { SeasonStanding } from "@/lib/season";
+import { SeasonStanding, MISSED_MAJOR_PENALTY } from "@/lib/season";
 import { calculateStandings } from "@/lib/scoring";
 
 interface LeagueMember {
@@ -37,6 +37,9 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
 
       // For each tournament, try to get locked draft entries + ESPN data
       const tournamentStandings = new Map<TournamentId, Map<string, number>>();
+      // Worst (highest = most over par) counting score among each major's teams —
+      // the basis for the missed-major penalty (worst + 5).
+      const worstByTournament = new Map<TournamentId, number>();
       let birdies = 0;
 
       for (const t of tournamentConfigs) {
@@ -60,6 +63,10 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
             scoreMap.set(s.entry.owner, s.countingScore);
           }
           tournamentStandings.set(t.id as TournamentId, scoreMap);
+          worstByTournament.set(
+            t.id as TournamentId,
+            Math.max(...standings.map((s) => s.countingScore))
+          );
         } catch {
           // Skip this tournament
         }
@@ -69,12 +76,35 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
       const seasonStandings: SeasonStanding[] = members.map((member) => {
         const tournamentResults = tournamentConfigs.map((t) => {
           const scoreMap = tournamentStandings.get(t.id as TournamentId);
-          const score = scoreMap?.get(member.display_name) ?? null;
+          // No standings yet → that major hasn't been played; show nothing.
+          if (!scoreMap) {
+            return {
+              tournamentId: t.id as TournamentId,
+              shortName: t.shortName,
+              countingScore: null,
+              rank: null,
+              isPenalty: false,
+            };
+          }
+          const own = scoreMap.get(member.display_name);
+          if (own != null) {
+            return {
+              tournamentId: t.id as TournamentId,
+              shortName: t.shortName,
+              countingScore: own,
+              rank: null,
+              isPenalty: false,
+            };
+          }
+          // Major was played but this member never drafted a team → penalty:
+          // the worst team's score for that major, plus 5.
+          const worst = worstByTournament.get(t.id as TournamentId) ?? 0;
           return {
             tournamentId: t.id as TournamentId,
             shortName: t.shortName,
-            countingScore: score,
+            countingScore: worst + MISSED_MAJOR_PENALTY,
             rank: null,
+            isPenalty: true,
           };
         });
 

@@ -8,7 +8,12 @@ export interface SeasonTournamentResult {
   shortName: string;
   countingScore: number | null;
   rank: number | null;
+  /** True when this is a missed-major penalty (worst team that major + 5), not a real score. */
+  isPenalty?: boolean;
 }
+
+/** Points added on top of the worst team's score when a member missed a major. */
+export const MISSED_MAJOR_PENALTY = 5;
 
 export interface SeasonStanding {
   owner: string;
