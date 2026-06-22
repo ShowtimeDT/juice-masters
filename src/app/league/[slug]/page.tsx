@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getTournament, isTournamentId, TournamentId } from "@/lib/tournaments";
-import TournamentTabs from "@/components/TournamentTabs";
 import AppTabs, { AppView, isAppView } from "@/components/AppTabs";
 import LeagueSwitcher from "@/components/LeagueSwitcher";
 import AccountMenu from "@/components/AccountMenu";
@@ -211,22 +210,32 @@ function LeagueContent() {
           <AccountMenu loginCallbackUrl={`/league/${slug}`} />
         </AppTabs>
 
-        {activeView === "standings" && (
-          <>
-            <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
-
-            {config.id === "season" ? (
+        {activeView === "standings" &&
+          (config.id === "season" ? (
+            <div className="min-h-screen bg-surface">
+              <div className="max-w-[1080px] mx-auto px-6 pt-6">
+                <button
+                  onClick={() => handleTabSelect(defaultTournamentTab())}
+                  className="inline-flex items-center gap-2 text-sm text-gold2 hover:text-ink transition-colors"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Back to {getTournament(defaultTournamentTab()).shortName}
+                </button>
+              </div>
               <SeasonLeaderboard leagueId={leagueData.league.id} />
-            ) : (
-              <DraftAwareTournament
-                config={config}
-                leagueId={leagueData.league.id}
-                isMember={!!myMember}
-                onDraftNow={() => handleViewSelect("team")}
-              />
-            )}
-          </>
-        )}
+            </div>
+          ) : (
+            <DraftAwareTournament
+              config={config}
+              leagueId={leagueData.league.id}
+              isMember={!!myMember}
+              onDraftNow={() => handleViewSelect("team")}
+              onSelectMajor={handleTabSelect}
+              onSeasonStandings={() => handleTabSelect("season")}
+            />
+          ))}
 
         {activeView === "team" && (
           <MyTeam

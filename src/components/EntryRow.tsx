@@ -1,163 +1,138 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { EntryStanding, GolferScoreWithCounting } from "@/lib/types";
-import {
-  formatScore,
-  scoreColor,
-  rankSuffix,
-  headshotUrl,
-  golferInitials,
-  golferLastName,
-} from "@/lib/format";
+import { formatScore, scoreColor, rankSuffix, golferLastName } from "@/lib/format";
+import Headshot from "@/components/ui/Headshot";
 import GolferRow from "./GolferRow";
 
 interface EntryRowProps {
   standing: EntryStanding;
-  /** Uniform team-name column width (ch) so golfers align across rows. */
-  nameWidthCh?: number;
-}
-
-function HeadshotAvatar({ golfer }: { golfer: GolferScoreWithCounting }) {
-  return (
-    <div
-      className={`relative w-10 h-10 rounded-full overflow-hidden bg-avatar border-2 transition-colors ${
-        golfer.missedCut
-          ? "border-red-500/40 grayscale opacity-60"
-          : "border-avatar-ring hover:border-avatar-ring-hover"
-      }`}
-    >
-      {golfer.espnId ? (
-        <Image
-          src={headshotUrl(golfer.espnId)}
-          alt={golfer.name}
-          fill
-          className="object-cover object-top"
-          unoptimized
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs font-bold">
-          {golferInitials(golfer.name)}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TopFiveStrip({ golfers }: { golfers: GolferScoreWithCounting[] }) {
-  return (
-    <div className="hidden sm:flex flex-1 items-center justify-center gap-5">
-      {golfers.map((g) => (
-        <div key={`${g.name}-${g.tier}`} className="flex flex-col items-center gap-1 w-14">
-          <HeadshotAvatar golfer={g} />
-          <span className="text-[10px] text-label text-center leading-tight truncate w-full">
-            {golferLastName(g.name)}
-          </span>
-          <span className={`text-[10px] font-mono font-semibold ${scoreColor(g.effectiveScore)}`}>
-            {g.scoreDisplay === "-" ? "-" : formatScore(g.effectiveScore)}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 function sortByEffectiveScore(golfers: GolferScoreWithCounting[]) {
   return [...golfers].sort((a, b) => a.effectiveScore - b.effectiveScore);
 }
 
-export default function EntryRow({ standing, nameWidthCh = 21 }: EntryRowProps) {
-  const [expanded, setExpanded] = useState(false);
+/** One counting-golfer chip in the inline five-up strip. */
+function PickChip({ golfer }: { golfer: GolferScoreWithCounting }) {
+  const notPlayed = golfer.scoreDisplay === "-";
+  return (
+    <div className="flex flex-col items-center gap-1.5 text-center min-w-0">
+      <Headshot name={golfer.name} espnId={golfer.espnId} size={40} missedCut={golfer.missedCut} />
+      <span className="text-[11.5px] text-muted truncate max-w-full">
+        {golferLastName(golfer.name)}
+      </span>
+      <span className={`text-[13px] font-semibold tnum ${scoreColor(golfer.effectiveScore)}`}>
+        {notPlayed ? "–" : formatScore(golfer.effectiveScore)}
+      </span>
+    </div>
+  );
+}
+
+export default function EntryRow({ standing }: EntryRowProps) {
+  const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
   const { entry, golferScores, countingScore, rank } = standing;
 
-  const topFive = sortByEffectiveScore(golferScores.filter((g) => g.isCounting));
+  const isYou = Boolean(session?.user?.name) && entry.owner === session?.user?.name;
+  const isLead = rank === 1;
+
+  const counting = sortByEffectiveScore(golferScores.filter((g) => g.isCounting));
   const expandedOrder = [
-    ...sortByEffectiveScore(golferScores.filter((g) => g.isCounting)),
+    ...counting,
     ...sortByEffectiveScore(golferScores.filter((g) => !g.isCounting)),
   ];
 
   return (
-    <div className="bg-card rounded-lg overflow-hidden border border-edge hover:border-edge-hover transition-colors">
-      {/* Summary row. Left (rank+name) and right (score+chevron) get the
-          same fixed width on desktop, so the golfer strip is centered on
-          the card regardless of name or score length. */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 cursor-pointer text-left"
-        style={{ "--side-col": `calc(4.5rem + ${nameWidthCh}ch)` } as React.CSSProperties}
-      >
-        {/* Left: rank + name */}
-        <div className="flex items-center gap-3 sm:gap-4 flex-1 sm:flex-none sm:w-[var(--side-col)] min-w-0 shrink-0">
-          <div className="w-10 sm:w-14 text-center shrink-0">
-            <span className="text-2xl sm:text-[2rem] font-serif italic font-bold text-ink leading-none">
-              {rank}
-            </span>
-            <span className="text-xs sm:text-sm font-serif italic text-ink">
-              {rankSuffix(rank)}
-            </span>
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-white font-semibold text-sm sm:text-base leading-tight truncate">
-              {entry.name}
-            </h3>
-            {entry.owner !== entry.name && (
-              <p className="text-gray-500 text-[10px] sm:text-xs leading-tight truncate">
-                {entry.owner}
-              </p>
-            )}
-          </div>
-        </div>
+    <div
+      className={`rounded-2xl border overflow-hidden transition-colors ${
+        isYou
+          ? "border-gold/30 bg-[linear-gradient(180deg,rgba(201,162,75,0.05),transparent),var(--surface)]"
+          : "border-edge bg-card hover:border-edge-hover"
+      }`}
+    >
+      <div className="flex items-center gap-3 sm:gap-[18px] px-4 sm:px-[22px] py-[15px]">
+        {/* Rank */}
+        <span
+          className={`font-serif text-[25px] leading-none w-10 shrink-0 ${
+            isLead ? "text-gold" : "text-faint"
+          }`}
+        >
+          {rank}
+          <sup className="font-serif italic text-[13px] font-medium ml-px">{rankSuffix(rank)}</sup>
+        </span>
 
-        <TopFiveStrip golfers={topFive} />
-
-        {/* Right: score + chevron, mirrors the left column's width. The
-            wide gap floats the score off the card edge. */}
-        <div className="flex items-center justify-end gap-3 sm:gap-10 shrink-0 sm:w-[var(--side-col)]">
-          <div className={`text-right ${scoreColor(countingScore)}`}>
-            <span className="text-2xl sm:text-[2.2rem] font-serif font-bold leading-none">
-              {formatScore(countingScore)}
-            </span>
-          </div>
-
-          {/* Expand icon */}
-          <svg
-            className={`w-4 h-4 text-faint transition-transform shrink-0 ${
-              expanded ? "rotate-180" : ""
+        {/* Team name + owner */}
+        <div className="w-[110px] sm:w-[168px] shrink-0 min-w-0">
+          <b
+            className={`block font-serif font-medium text-[18px] sm:text-[20px] leading-[1.12] truncate ${
+              isYou ? "text-gold2" : "text-ink"
             }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+            {entry.name}
+          </b>
+          {entry.owner !== entry.name && (
+            <span className="block text-[11px] tracking-[0.4px] text-faint truncate">
+              {entry.owner}
+            </span>
+          )}
         </div>
-      </button>
 
-      {/* Expanded golfer details */}
-      {expanded && (
-        <div className="bg-card-inset border-t border-edge overflow-x-auto">
-          <div className="min-w-[28rem]">
-            {/* Column headers */}
-            <div className="grid grid-cols-[2rem_minmax(7rem,1fr)_3.5rem_1rem_repeat(4,3rem)_3rem] sm:grid-cols-[2.5rem_1fr_4rem_1.5rem_repeat(4,3.5rem)_3.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wider text-faint font-semibold">
-              <span></span>
+        {/* Counting five (desktop) */}
+        <div className="hidden sm:grid flex-1 grid-cols-5 gap-2 items-start min-w-0">
+          {counting.map((g) => (
+            <PickChip key={`${g.name}-${g.tier}`} golfer={g} />
+          ))}
+        </div>
+
+        <div className="flex-1 sm:hidden" />
+
+        {/* Team total */}
+        <span
+          className={`w-[52px] sm:w-[58px] text-right font-sans font-semibold text-[22px] sm:text-[26px] leading-none tracking-[-0.3px] tnum shrink-0 ${scoreColor(
+            countingScore
+          )}`}
+        >
+          {formatScore(countingScore)}
+        </span>
+
+        {/* Expand */}
+        <button
+          onClick={() => setOpen(!open)}
+          aria-label="Show round breakdown"
+          aria-expanded={open}
+          className="w-[30px] h-[30px] shrink-0 rounded-full border border-edge flex items-center justify-center text-faint hover:text-gold hover:border-gold/50 transition-colors cursor-pointer"
+        >
+          <svg
+            className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Expanded breakdown */}
+      {open && (
+        <div className="mx-3 sm:mx-[14px] pb-3 border-t border-line2 overflow-x-auto">
+          <div className="min-w-[30rem]">
+            <div className="grid grid-cols-[28px_minmax(0,1fr)_38px_38px_38px_38px_50px_52px] sm:grid-cols-[32px_minmax(0,1fr)_44px_44px_44px_44px_58px_58px] gap-x-1 h-[38px] items-center px-2 sm:px-3 text-[10px] tracking-[1.4px] uppercase text-faint">
+              <span />
               <span>Golfer</span>
-              <span className="text-right">Score</span>
-              <span></span>
               <span className="text-center">R1</span>
               <span className="text-center">R2</span>
               <span className="text-center">R3</span>
               <span className="text-center">R4</span>
               <span className="text-center">Thru</span>
+              <span className="text-right">Score</span>
             </div>
-
-            {expandedOrder.map((golfer) => (
-              <GolferRow key={`${golfer.name}-${golfer.tier}`} golfer={golfer} />
+            {expandedOrder.map((g) => (
+              <GolferRow key={`${g.name}-${g.tier}`} golfer={g} you={isYou} />
             ))}
           </div>
         </div>
