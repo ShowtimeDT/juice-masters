@@ -75,12 +75,22 @@ export default function JoinLeaguePage() {
       const data = await res.json();
       if (data.league) setLeague(data.league);
       const all: MemberSlot[] = data.members || [];
+
+      // Already in this league on the signed-in account? Skip the whole
+      // join/claim flow and go straight to their team — returning should be
+      // seamless. (Leave `unclaimed` null so the loader stays during nav.)
+      const myId = session?.user?.id;
+      if (myId && all.some((m) => m.user_id === myId)) {
+        router.replace(`/league/${slug}`);
+        return;
+      }
+
       setMembers(all);
       setUnclaimed(all.filter((m) => m.user_id === null));
     } catch {
       setUnclaimed([]);
     }
-  }, [slug, code]);
+  }, [slug, code, session?.user?.id, router]);
 
   useEffect(() => {
     if (status === "authenticated" && unclaimed === null) {
