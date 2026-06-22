@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { TOURNAMENTS, TournamentConfig } from "@/lib/tournaments";
@@ -232,10 +233,10 @@ export default function TournamentSettingsPage() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-edge bg-bg2/90 backdrop-blur-md">
         <div className="mx-auto flex h-[62px] max-w-[1100px] items-center gap-5 px-6">
-          <div className="flex items-center gap-3">
+          <Link href="/home" className="flex items-center gap-3 no-underline">
             <Logo size={38} />
             <b className="font-serif text-[21px] font-semibold text-ink">Juice Tour</b>
-          </div>
+          </Link>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             {draft?.status === "open" && (

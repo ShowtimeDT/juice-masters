@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 
 interface TopBrandBarProps {
@@ -27,12 +28,12 @@ export default function TopBrandBar({
         className="mx-auto flex h-[62px] items-center gap-7 px-7"
         style={{ maxWidth }}
       >
-        <a href="/?home=1" className="flex items-center gap-3 shrink-0 no-underline">
+        <Link href="/home" className="flex items-center gap-3 shrink-0 no-underline">
           <Logo size={38} />
           <b className="font-serif text-[21px] font-semibold text-ink whitespace-nowrap">
             Juice Tour
           </b>
-        </a>
+        </Link>
         <div className="flex-1" />
         {monogram && (
           <span

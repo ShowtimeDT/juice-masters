@@ -73,13 +73,22 @@ export default function AppTabs({ active, onSelect, leagueSlug, teamBadge, child
   return (
     <header className="sticky top-0 z-40 bg-bg2/90 backdrop-blur-md border-b border-edge">
       <div className="max-w-[1180px] mx-auto h-[62px] px-5 sm:px-7 flex items-center gap-5 sm:gap-8">
-        {/* Brand */}
-        <Link href="/home" className="flex items-center gap-2.5 shrink-0">
-          <Logo size={38} />
-          <b className="font-serif font-semibold text-[21px] text-ink tracking-[0.3px] whitespace-nowrap hidden sm:block">
-            Juice Tour
-          </b>
-        </Link>
+        {/* Brand — links to the dashboard everywhere except on the dashboard itself */}
+        {active === "home" ? (
+          <div className="flex items-center gap-2.5 shrink-0 select-none">
+            <Logo size={38} />
+            <b className="font-serif font-semibold text-[21px] text-ink tracking-[0.3px] whitespace-nowrap hidden sm:block">
+              Juice Tour
+            </b>
+          </div>
+        ) : (
+          <Link href="/home" className="flex items-center gap-2.5 shrink-0">
+            <Logo size={38} />
+            <b className="font-serif font-semibold text-[21px] text-ink tracking-[0.3px] whitespace-nowrap hidden sm:block">
+              Juice Tour
+            </b>
+          </Link>
+        )}
 
         {/* Phone: hamburger + current page name */}
         <div className="relative sm:hidden" ref={menuRef}>

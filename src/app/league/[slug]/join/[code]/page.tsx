@@ -138,7 +138,7 @@ export default function JoinLeaguePage() {
 
   const topBar = (
     <div className="flex items-center justify-between px-[30px] py-[22px]">
-      <Link href={`/league/${slug}`} className="flex items-center gap-[11px] no-underline">
+      <Link href="/home" className="flex items-center gap-[11px] no-underline">
         <Logo size={34} />
         <b className="font-serif text-xl font-semibold text-ink">Juice Tour</b>
       </Link>

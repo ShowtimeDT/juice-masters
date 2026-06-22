@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 
 interface AppTopBarProps {
@@ -26,12 +27,12 @@ export default function AppTopBar({
   return (
     <header className="sticky top-0 z-40 border-b border-edge bg-bg2/90 backdrop-blur-md">
       <div className={`mx-auto flex h-[62px] items-center gap-5 px-7 ${maxWidthClass}`}>
-        <div className="flex flex-none items-center gap-3">
+        <Link href="/home" className="flex flex-none items-center gap-3 no-underline">
           <Logo size={38} />
           <b className="whitespace-nowrap font-serif text-[21px] font-semibold text-ink">
             Juice Tour
           </b>
-        </div>
+        </Link>
         <div className="flex-1" />
         {onSignOut ? (
           <div className="flex flex-none items-center gap-2.5">
