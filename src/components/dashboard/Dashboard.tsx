@@ -46,6 +46,11 @@ interface DraftStatus {
   closeISO: string | null;
 }
 
+/** "The Masters" / "The Open" — never "The The Open" (some names own their "The"). */
+const theMajor = (name: string) => (/^the\s/i.test(name) ? name : `The ${name}`);
+/** Mid-sentence article: "at the Masters" but "at The Open". */
+const atMajor = (name: string) => (/^the\s/i.test(name) ? `at ${name}` : `at the ${name}`);
+
 const monogram = (name: string) =>
   name
     .trim()
@@ -280,7 +285,7 @@ function OffView({
         </span>
         <div className="flex-1 min-w-0">
           <b className="font-serif font-medium text-[22px] text-ink block leading-tight">
-            {next ? `The ${next.shortName} is up next` : "The season is complete"}
+            {next ? `${theMajor(next.shortName)} is up next` : "The season is complete"}
           </b>
           <span className="text-[13px] text-muted block mt-1">
             {next
@@ -311,8 +316,8 @@ function OffView({
             <div className="flex-1 min-w-0">
               <div className="font-serif text-[18px] text-ink">
                 {primary?.mine
-                  ? `You finished ${ordinal(primary.mine.rank)} at the ${last.shortName}`
-                  : `The ${last.shortName} has wrapped`}
+                  ? `You finished ${ordinal(primary.mine.rank)} ${atMajor(last.shortName)}`
+                  : `${theMajor(last.shortName)} has wrapped`}
               </div>
               <div className="text-[12.5px] text-faint">
                 {primary?.mine
