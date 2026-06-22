@@ -2,23 +2,23 @@ import type { CSSProperties } from "react";
 import { HoleScore, RoundScore } from "@/lib/types";
 
 /*
- * Hole-by-hole scorecard. Every round renders on ONE shared, fixed-width grid so
- * hole-number labels sit exactly above their scores and all four rounds align with
- * each other. Columns are fixed px (not 1fr) so the markers stay square and the
- * whole card scrolls horizontally on narrow screens instead of wrapping.
- *
- * Layout per row: 18 hole columns + a thin spacer + a TOT column. Both the
- * number row and the score row use the identical template (GRID_COLS).
+ * Hole-by-hole scorecard. Every round renders on ONE shared, full-width grid:
+ * 19 equal columns (18 holes + TOT) divide the card's full width, so the holes
+ * spread edge-to-edge like a real scorecard. The hole-number header row and each
+ * round's score row use the identical template so they stay aligned. A minWidth
+ * keeps the markers usable on very narrow screens (the card scrolls rather than
+ * crushing the columns); on a normal card the 1fr columns fill 100%.
  */
-const HOLE_W = 30; // px per hole column
-const SPACER_W = 12; // gap before TOT
-const TOT_W = 56; // TOT column
-const MARKER = 27; // square marker diameter (design: 27px)
+const MARKER = 27; // fixed square marker diameter (design: 27px)
 
 const GRID_COLS: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: `repeat(18, ${HOLE_W}px) ${SPACER_W}px ${TOT_W}px`,
+  gridTemplateColumns: "repeat(19, 1fr)",
   alignItems: "center",
+  width: "100%",
+  minWidth: 560,
+  paddingLeft: 8,
+  paddingRight: 8,
 };
 
 /** Marker styling by score-to-par, matching the design scorecard. */
@@ -76,7 +76,6 @@ export function RoundHoles({ round }: { round: RoundScore }) {
             {i + 1}
           </span>
         ))}
-        <span />
         <span className="text-right text-[9px] font-semibold tracking-[1px] uppercase text-muted border-l border-line2 pl-1.5">
           Tot
         </span>
@@ -87,7 +86,6 @@ export function RoundHoles({ round }: { round: RoundScore }) {
         {cells.map((hole, i) => (
           <HoleCell key={i} hole={hole} />
         ))}
-        <span />
         <span
           className={`flex items-center justify-end h-[34px] text-[15px] font-semibold tnum border-l border-line2 pl-1.5 ${totalColor(
             round.score
