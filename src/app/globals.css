@@ -1,61 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #0A0D0C;
-  --foreground: #F3F4F6;
+  --background: #0E1411;
+  --foreground: #F1ECDE;
 }
 
 /*
- * App color palette — the single place to change the site's look.
- * Each token becomes a Tailwind utility: bg-card, border-edge, text-under, etc.
- * Tournament-specific colors (gradients, accents) live in src/lib/tournaments.ts.
+ * Juice Tour "Dawn" design system — the single place to change the site's look.
+ * Each --color-* token becomes a Tailwind utility: bg-surface, border-edge, text-ink, etc.
+ * Raw design tokens (--bg, --gold, …) are exposed too for hand-written CSS / inline styles.
+ * Source of truth: design_handoff_juice_tour_app/README.md and each screen's .html :root.
  */
 @theme {
-  /* Surfaces — green-tinted near-black family */
-  --color-surface: #0A0D0C;            /* page background */
-  --color-card: #141816;               /* card background */
-  --color-card-inset: #0F1311;         /* expanded-table background inside cards */
+  /* ---- Surfaces — near-black fairway green family ---- */
+  --color-surface: #0E1411;            /* --bg: app/page background */
+  --color-bg2: #0A0F0C;                /* darker wells: top bar, inputs, dark cards */
+  --color-card: #141E18;               /* --surface: cards, panels */
+  --color-surface2: #19241D;           /* insets, avatar backing, steppers */
+  --color-card-inset: #10160F;         /* expanded-table background inside cards */
 
-  /* Borders */
-  --color-edge: #272D29;               /* card borders */
-  --color-edge-hover: #38403B;         /* card borders on hover */
+  /* ---- Borders ---- */
+  --color-edge: rgba(255, 255, 255, 0.09);   /* --line: card borders */
+  --color-edge-hover: rgba(201, 162, 75, 0.40); /* gold-tinted hover border */
+  --color-line2: rgba(255, 255, 255, 0.05);  /* inner dividers */
 
-  /* Text never uses pure white — text-white resolves to this */
-  --color-white: #F3F4F6;
+  /* ---- Text — warm cream, never pure white ---- */
+  --color-white: #F1ECDE;              /* text-white resolves to warm cream --ink */
+  --color-ink: #F1ECDE;                /* primary text / headings */
+  --color-text: #C3C8BA;               /* body text */
+  --color-muted: #969D93;              /* secondary text */
+  --color-faint: #67705F;              /* tertiary / labels / chevrons */
+  --color-label: #969D93;              /* tiny labels under headshots */
+  --color-label-dim: #67705F;          /* uppercase info labels */
 
-  /* Golf scores */
-  --color-under: #4ade80;              /* under par (green) */
-  --color-over: #f87171;               /* over par (red) */
-  --color-even: #9CA3AF;               /* even par */
+  /* ---- Golf scores ---- */
+  --color-under: #9CCB86;              /* --sage: under par / positive / live */
+  --color-over: #D98C6A;               /* --rose: over par / negative / danger */
+  --color-even: #969D93;               /* even par (muted) */
 
-  /* Text */
-  --color-ink: #E3E6EA;                /* rank numerals */
-  --color-muted: #9CA3AF;              /* secondary text (header timestamp) */
-  --color-faint: #6A717C;              /* table headers, chevrons */
-  --color-label: #8A919C;              /* tiny labels under headshots */
-  --color-label-dim: #767D88;          /* uppercase info labels */
+  /* ---- Body-text grays — remapped onto the warm scale ---- */
+  --color-gray-300: #C3C8BA;
+  --color-gray-400: #969D93;
+  --color-gray-500: #67705F;
+  --color-gray-600: #4F564B;
 
-  /* Body-text grays — gray-400 is the canonical secondary text color */
-  --color-gray-300: #C7CCD4;
-  --color-gray-400: #9CA3AF;
-  --color-gray-500: #7E8590;
-  --color-gray-600: #5C636E;
+  /* ---- Brand — the "Dawn" gold ---- */
+  --color-brand: #C9A24B;              /* --gold: primary brand, buttons, links */
+  --color-brand-hover: #E2C079;        /* --gold2: lighter gold, accents, hover */
+  --color-gold: #C9A24B;
+  --color-gold2: #E2C079;
+  --color-goldsoft: rgba(201, 162, 75, 0.12); /* gold tint fills, active states */
 
-  /* Brand */
-  --color-brand: #D4AF37;             /* metallic gold — chrome, links, buttons */
-  --color-brand-hover: #E1C155;       /* gold hover state */
+  /* ---- Status accents ---- */
+  --color-sage: #9CCB86;               /* under par / positive / live */
+  --color-rose: #D98C6A;               /* over par / negative / danger */
+  --color-blue: #7FA8C9;               /* "Final" / locked status accents */
 
-  /* Scorecard paper (marketing page artifact) */
-  --color-paper: #F4EFE1;              /* cream stock */
-  --color-paper-ink: #243527;          /* green-black ink */
-  --color-paper-faint: #6B7A6E;        /* muted ink for small labels */
-  --color-paper-line: #2435274D;       /* ruling lines (~30% ink) */
+  /* ---- Scorecard paper (marketing page artifact) — unchanged ---- */
+  --color-paper: #F4EFE1;
+  --color-paper-ink: #243527;
+  --color-paper-faint: #6B7A6E;
+  --color-paper-line: #2435274D;
 
-  /* Headshot avatars */
-  --color-avatar: #1A201C;             /* avatar background */
-  --color-avatar-ring: #2E4A38;        /* avatar border */
-  --color-avatar-ring-hover: #3F6A4E;  /* avatar border on hover */
+  /* ---- Headshot avatars ---- */
+  --color-avatar: #19241D;             /* avatar background (surface2) */
+  --color-avatar-ring: rgba(255, 255, 255, 0.09);
+  --color-avatar-ring-hover: rgba(201, 162, 75, 0.40);
+
+  /* ---- Fonts ---- */
+  --font-sans: 'Jost', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 @theme inline {
@@ -63,16 +79,67 @@
   --color-foreground: var(--foreground);
 }
 
+/* Raw design tokens for hand-written CSS and inline styles (conic rings, gradients, etc.) */
+:root {
+  --bg: #0E1411;
+  --bg2: #0A0F0C;
+  --surface: #141E18;
+  --surface2: #19241D;
+  --ink: #F1ECDE;
+  --text: #C3C8BA;
+  --muted: #969D93;
+  --faint: #67705F;
+  --line: rgba(255, 255, 255, 0.09);
+  --line2: rgba(255, 255, 255, 0.05);
+  --gold: #C9A24B;
+  --gold2: #E2C079;
+  --goldsoft: rgba(201, 162, 75, 0.12);
+  --sage: #9CCB86;
+  --rose: #D98C6A;
+  --blue: #7FA8C9;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  font-family: 'Jost', system-ui, -apple-system, sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Cormorant Garamond — page titles, team names, event headers */
 .font-serif {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* JetBrains Mono — invite codes, league IDs, countdown timers */
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/*
+ * Scores / totals use the SANS font with tabular figures — a serif "1" reads like a
+ * roman numeral, which the design deliberately avoids. Apply .tnum to numeric values.
+ */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Uppercase eyebrow / section labels */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+}
+
+/* Gold CTA gradient (primary buttons) */
+.btn-gold {
+  background: linear-gradient(180deg, var(--gold2), var(--gold));
+  color: #1A1408;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* Soft dark halo behind hero text so it reads over photography */
@@ -93,4 +160,14 @@ input[type="datetime-local"],
 input[type="date"],
 input[type="time"] {
   color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
