@@ -31,12 +31,41 @@ function canFetchField(firstTeeTime: string): boolean {
   return new Date() >= monday;
 }
 
-function statusColor(status: string) {
-  if (status === "pending") return "bg-purple-500/20 text-purple-400";
-  if (status === "open") return "bg-green-500/20 text-green-400";
-  if (status === "closed") return "bg-yellow-500/20 text-yellow-400";
-  if (status === "locked") return "bg-blue-500/20 text-blue-400";
-  return "bg-gray-500/20 text-gray-400";
+/** First letters of the first two words, uppercased — the gold monogram. */
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+/** The status pill shown next to a draft, styled per the design's color families. */
+function StatusPill({ status }: { status: string }) {
+  // Map the draft lifecycle onto the design's pill vocabulary.
+  const live = status === "open";
+  const cls: Record<string, string> = {
+    pending: "text-gold2 border-gold/45",
+    open: "text-sage border-sage/45",
+    closed: "text-gold2 border-gold/45",
+    locked: "text-blue border-blue/40",
+    final: "text-blue border-blue/40",
+    completed: "text-blue border-blue/40",
+  };
+  const style = cls[status] ?? "text-faint border-edge";
+  return (
+    <span
+      className={`inline-flex items-center gap-[5px] rounded-[5px] border px-2 py-[3px] text-[9px] font-semibold uppercase tracking-[1.3px] ${style}`}
+    >
+      {live && (
+        <i className="h-[5px] w-[5px] rounded-full bg-sage shadow-[0_0_0_3px_rgba(156,203,134,0.2)]" />
+      )}
+      {status}
+    </span>
+  );
 }
 
 export default function ManageLeaguePage() {
@@ -50,6 +79,7 @@ export default function ManageLeaguePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -175,10 +205,22 @@ export default function ManageLeaguePage() {
     setFetching(null);
   };
 
+  const inviteLink =
+    typeof window !== "undefined" && leagueData
+      ? `${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}`
+      : "";
+
+  const copyInvite = () => {
+    if (!inviteLink) return;
+    navigator.clipboard.writeText(inviteLink).catch(() => {});
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   if (loading || authStatus === "loading") {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        <div className="inline-block w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -187,8 +229,8 @@ export default function ManageLeaguePage() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-400 text-sm">{error}</p>
-          <a href={`/league/${slug}`} className="text-brand text-sm mt-4 inline-block">Back to league</a>
+          <p className="text-rose text-sm">{error}</p>
+          <a href={`/league/${slug}`} className="text-gold text-sm mt-4 inline-block">Back to league</a>
         </div>
       </div>
     );
@@ -196,173 +238,288 @@ export default function ManageLeaguePage() {
 
   if (!leagueData) return null;
 
+  const memberCount = leagueData.members.length;
+
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-card-inset border-b border-edge px-4 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <a href={`/league/${slug}`} className="text-gray-400 hover:text-white text-sm">← Back</a>
-            <h1 className="text-white font-serif text-xl font-bold">Manage {leagueData.league.name}</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        {/* Invite Link */}
-        <div className="bg-card rounded-lg border border-edge p-4">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-3">Invite Link</h2>
-          <div className="flex gap-2 items-center">
-            <code className="flex-1 bg-card-inset border border-edge rounded-lg px-3 py-2 text-brand text-xs font-mono overflow-x-auto">
-              {typeof window !== "undefined" ? `${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}` : ""}
-            </code>
-            <button
-              onClick={() => navigator.clipboard.writeText(`${window.location.origin}/league/${slug}/join/${leagueData.league.invite_code}`)}
-              className="px-3 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer shrink-0"
-            >
-              Copy
-            </button>
-          </div>
-          <p className="text-gray-500 text-xs mt-2">
-            {leagueData.members.length} member{leagueData.members.length !== 1 ? "s" : ""} in league
-          </p>
-        </div>
-
-        {/* Privacy */}
-        <PrivacyCard
-          leagueId={leagueData.league.id}
-          leagueSlug={leagueData.league.slug}
-          onSaved={fetchData}
-        />
-
-        {/* Members */}
-        <div className="bg-card rounded-lg border border-edge overflow-hidden">
-          <div className="px-4 py-3 border-b border-edge">
-            <h2 className="text-white font-bold text-sm uppercase tracking-wide">Members</h2>
-            <p className="text-gray-500 text-xs mt-1">
-              Unclaimed members appear when someone joins via the invite link and can claim their name.
-              <span className="block mt-0.5">
-                <span className="text-gray-400">Unlink</span> frees a slot so the right person can re-claim it.{" "}
-                <span className="text-gray-400">Remove</span> deletes the member and erases their picks everywhere.
+      <div className="mx-auto max-w-[1040px] px-6 pb-[90px]">
+        {/* HEADER */}
+        <div className="pt-10 pb-7">
+          <a
+            href={`/league/${slug}`}
+            className="mb-[22px] inline-flex items-center gap-[7px] text-[13px] text-muted transition-colors hover:text-gold2"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M15 5l-7 7 7 7"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Back to league
+          </a>
+          <div className="eyebrow">Commissioner Tools</div>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-6">
+            <h1 className="m-0 flex items-center gap-4 whitespace-nowrap font-serif text-[46px] font-medium leading-none text-ink">
+              {leagueData.league.name}
+              <span className="inline-flex -translate-y-1.5 items-center gap-[7px] rounded-full border border-gold/45 bg-goldsoft px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[1.6px] text-gold2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M7 4h10v4a5 5 0 0 1-10 0V4ZM12 13v3M9 20h6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Commissioner
               </span>
-            </p>
+            </h1>
           </div>
-          <div>
-            {leagueData.members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 last:border-0"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-gray-200 text-sm truncate">{member.display_name}</span>
-                  {member.user_id === leagueData.league.commissioner_id && (
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand/20 text-brand shrink-0">
-                      Commissioner
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {member.user_id ? (
-                    <span className="text-green-400 text-xs">
-                      Claimed{member.username ? ` — @${member.username}` : ""}
-                    </span>
-                  ) : (
-                    <span className="text-gray-500 text-xs">Unclaimed</span>
-                  )}
-                  {member.user_id !== leagueData.league.commissioner_id && (
-                    <>
-                      {member.user_id && (
-                        <button
-                          onClick={() => unlinkMember(member)}
-                          className="text-gray-500 text-xs hover:text-white transition-colors cursor-pointer"
-                        >
-                          Unlink
-                        </button>
-                      )}
-                      <button
-                        onClick={() => removeMember(member)}
-                        className="text-gray-500 text-xs hover:text-red-400 transition-colors cursor-pointer"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="mt-[13px] text-[13.5px] tracking-[0.3px] text-muted">
+            {memberCount} member{memberCount !== 1 ? "s" : ""}
           </div>
         </div>
 
-        {/* Tournament Cards */}
-        <h2 className="text-white font-bold text-sm uppercase tracking-wide">Tournaments</h2>
-        <div className="space-y-3">
-          {tournamentConfigs.map((config) => {
-            const draft = drafts.find((d) => d.tournament_id === config.id);
-            const fieldAvailable = canFetchField(config.firstTeeTime);
-            const hasDraft = !!draft;
-
-            return (
-              <div
-                key={config.id}
-                className="bg-card rounded-lg border border-edge p-4"
+        {/* INVITE + PRIVACY */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-[1.25fr_1fr]">
+          {/* Invite & Share */}
+          <div className="rounded-[18px] border border-edge bg-card px-[26px] pb-7 pt-[26px]">
+            <h2 className="m-0 mb-1 font-sans text-xs font-semibold uppercase tracking-[2px] text-ink">
+              Invite &amp; Share
+            </h2>
+            <p className="m-0 mb-5 text-[13px] leading-normal text-muted">
+              Anyone with this link can join the league in one tap.
+            </p>
+            <div className="mb-[9px] text-[10.5px] uppercase tracking-[1.6px] text-faint">
+              Invite link
+            </div>
+            <div className="flex items-stretch gap-2.5">
+              <div className="flex h-[46px] min-w-0 flex-1 items-center rounded-[11px] border border-edge bg-bg2 px-3.5">
+                <code className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[12.5px] text-gold2">
+                  {inviteLink}
+                </code>
+              </div>
+              <button
+                onClick={copyInvite}
+                className="inline-flex h-[46px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[11px] px-[18px] text-[13px] font-medium text-[#1A1408] btn-gold transition-transform hover:-translate-y-px"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-white font-semibold text-sm">{config.name}</h3>
-                      {draft && (
-                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${statusColor(draft.status)}`}>
-                          {draft.status}
+                {copiedLink ? "Copied" : "Copy link"}
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-[9px] text-[13px] text-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+              <b className="font-semibold text-ink">{memberCount}</b>&nbsp;member
+              {memberCount !== 1 ? "s" : ""} in the league
+            </div>
+          </div>
+
+          {/* Privacy */}
+          <PrivacyCard
+            leagueId={leagueData.league.id}
+            leagueSlug={leagueData.league.slug}
+            onSaved={fetchData}
+          />
+        </div>
+
+        {/* MEMBERS */}
+        <div className="mt-5 rounded-[18px] border border-edge bg-card px-[26px] pb-7 pt-[26px]">
+          <h2 className="m-0 mb-1 font-sans text-xs font-semibold uppercase tracking-[2px] text-ink">
+            Members
+          </h2>
+          <p className="m-0 text-[13px] leading-normal text-muted">
+            Unclaimed slots appear when someone joins via the link and can claim their name.{" "}
+            <b className="text-text">Unlink</b> frees a slot to re-claim;{" "}
+            <b className="text-text">Remove</b> deletes the member and erases their picks everywhere.
+          </p>
+          <div className="mt-5">
+            {leagueData.members.map((member) => {
+              const isCommish = member.user_id === leagueData.league.commissioner_id;
+              const claimed = !!member.user_id;
+              return (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-3.5 border-t border-line2 px-1 py-3.5 first:border-t-0"
+                >
+                  <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-goldsoft text-sm font-semibold text-gold2 shadow-[0_0_0_1px_var(--line)]">
+                    {initials(member.display_name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5 text-[15px] font-medium leading-tight text-ink">
+                      <span className="truncate">{member.display_name}</span>
+                      {isCommish && (
+                        <span className="shrink-0 rounded-[5px] border border-gold/45 px-[7px] py-0.5 text-[9px] font-semibold uppercase tracking-[1.4px] text-gold2">
+                          Commissioner
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-500 text-xs mt-1">{config.dates} · {config.venue}</p>
+                    {claimed ? (
+                      <div className="mt-[3px] font-mono text-[12.5px] text-sage">
+                        Claimed{member.username ? ` · @${member.username}` : ""}
+                      </div>
+                    ) : (
+                      <div className="mt-[3px] text-[12.5px] italic text-faint">Unclaimed</div>
+                    )}
                   </div>
+                  <div className="flex shrink-0 items-center gap-[18px]">
+                    {isCommish ? (
+                      <span className="text-[13px] text-sage">This is you</span>
+                    ) : (
+                      <>
+                        {member.user_id && (
+                          <button
+                            onClick={() => unlinkMember(member)}
+                            className="cursor-pointer text-[13px] text-muted transition-colors hover:text-gold2"
+                          >
+                            Unlink
+                          </button>
+                        )}
+                        <button
+                          onClick={() => removeMember(member)}
+                          className="cursor-pointer text-[13px] text-muted transition-colors hover:text-rose"
+                        >
+                          Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
 
-                  <div className="flex items-center gap-2">
+            {/* Open spot — illustrates how an unclaimed slot appears via the invite link. */}
+            <div className="flex items-center gap-3.5 border-t border-line2 px-1 py-3.5">
+              <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-dashed border-edge text-faint">
+                +
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[15px] font-medium leading-tight text-muted">Open spot</div>
+                <div className="mt-[3px] text-[12.5px] italic text-faint">
+                  Waiting to be claimed via invite link
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TOURNAMENTS */}
+        <div className="mt-5 rounded-[18px] border border-edge bg-card px-[26px] pb-7 pt-[26px]">
+          <h2 className="m-0 mb-1 font-sans text-xs font-semibold uppercase tracking-[2px] text-ink">
+            Tournaments
+          </h2>
+          <p className="m-0 text-[13px] leading-normal text-muted">
+            Four majors make a season. Lock a field, tweak settings, or open the next draft.
+          </p>
+          <div className="mt-[18px] flex flex-col gap-3">
+            {tournamentConfigs.map((config, i) => {
+              const draft = drafts.find((d) => d.tournament_id === config.id);
+              const fieldAvailable = canFetchField(config.firstTeeTime);
+              const hasDraft = !!draft;
+              const live = draft?.status === "open";
+
+              return (
+                <div
+                  key={config.id}
+                  className={`flex flex-wrap items-center gap-[18px] rounded-[14px] border bg-bg2 px-5 py-4 ${
+                    live ? "border-sage/30" : "border-edge"
+                  }`}
+                >
+                  <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg border border-edge bg-card font-serif text-[15px] italic text-gold">
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-[11px]">
+                      <b className="whitespace-nowrap font-serif text-[21px] font-medium leading-none text-ink">
+                        {config.name.replace(/\n/g, " ")}
+                      </b>
+                      {draft ? (
+                        <StatusPill status={draft.status} />
+                      ) : (
+                        <span className="inline-flex items-center rounded-[5px] border border-edge px-2 py-[3px] text-[9px] font-semibold uppercase tracking-[1.3px] text-faint">
+                          {fieldAvailable ? "Needs setup" : "Field TBA"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 text-[12.5px] text-muted">
+                      {config.dates} · {config.venue}
+                    </div>
+                  </div>
+                  <div className="shrink-0 max-md:order-3 max-md:basis-full">
                     {!hasDraft && !fieldAvailable && (
-                      <span className="text-gray-500 text-xs">Field not available yet</span>
+                      <span className="text-[12.5px] italic text-faint">
+                        Field not available yet
+                      </span>
                     )}
                     {!hasDraft && fieldAvailable && (
                       <button
                         onClick={() => fetchField(config.id)}
                         disabled={fetching === config.id}
-                        className="px-4 py-2 bg-green-600 text-white font-semibold text-xs rounded-lg hover:bg-green-500 transition-colors cursor-pointer disabled:opacity-50"
+                        className="inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-[#1A1408] btn-gold transition-transform hover:-translate-y-px disabled:opacity-50"
                       >
-                        {fetching === config.id ? "Setting Up..." : "Play This Tournament"}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M5 12h14M13 6l6 6-6 6"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {fetching === config.id ? "Setting Up…" : "Set Up Draft"}
                       </button>
                     )}
                     {hasDraft && (
                       <a
                         href={`/league/${slug}/manage/${config.id}`}
-                        className="px-4 py-2 text-xs font-medium rounded-lg bg-card-inset border border-edge text-gray-300 hover:text-white hover:border-brand transition-colors"
+                        className="inline-flex items-center gap-2 whitespace-nowrap rounded-[10px] border border-edge bg-surface2 px-[15px] py-[9px] text-[13px] font-medium text-muted no-underline transition-colors hover:border-gold/50 hover:bg-goldsoft hover:text-gold2"
                       >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.8" />
+                          <path
+                            d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M18.4 18.4l-2.1-2.1M7.7 7.7 5.6 5.6"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                        </svg>
                         Settings
                       </a>
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Danger zone */}
-        <div className="bg-card rounded-lg border border-red-500/30 p-4">
-          <h2 className="text-red-400 font-bold text-sm uppercase tracking-wide mb-1">Danger Zone</h2>
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-gray-500 text-xs">
+        {/* DANGER ZONE */}
+        <div
+          className="mt-[30px] flex flex-wrap items-center justify-between gap-6 rounded-[18px] border px-[26px] py-6"
+          style={{
+            borderColor: "rgba(217,140,106,0.32)",
+            background:
+              "linear-gradient(180deg, rgba(217,140,106,0.05), transparent), #141E18",
+          }}
+        >
+          <div>
+            <h3 className="m-0 mb-1.5 font-sans text-xs font-semibold uppercase tracking-[2px] text-rose">
+              Danger Zone
+            </h3>
+            <p className="m-0 max-w-[62ch] text-[13px] leading-normal text-muted">
               Permanently delete this league, including all drafts, picks, and standings.
               This cannot be undone.
             </p>
-            <button
-              onClick={deleteLeague}
-              className="px-4 py-2 bg-red-500/10 border border-red-500/40 text-red-400 font-semibold text-xs rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer shrink-0"
-            >
-              Delete League
-            </button>
           </div>
+          <button
+            onClick={deleteLeague}
+            className="h-[46px] cursor-pointer whitespace-nowrap rounded-[11px] border border-rose/50 bg-transparent px-[18px] text-[13px] font-medium text-rose transition-colors hover:bg-rose/10"
+          >
+            Delete League
+          </button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

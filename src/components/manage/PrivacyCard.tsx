@@ -58,11 +58,12 @@ export default function PrivacyCard({ leagueId, leagueSlug, onSaved }: PrivacyCa
 
   if (!settings) {
     return (
-      <div className="bg-card rounded-lg border border-edge p-4">
-        <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
-          League Privacy
+      <div className="rounded-[18px] border border-edge bg-card px-[26px] pb-7 pt-[26px]">
+        <h2 className="m-0 mb-1 font-sans text-xs font-semibold uppercase tracking-[2px] text-ink">
+          Privacy &amp; Access
         </h2>
-        <div className="h-10 rounded-lg bg-card-inset animate-pulse" />
+        <p className="m-0 mb-5 text-[13px] text-muted">Control who can find and join.</p>
+        <div className="h-[46px] animate-pulse rounded-[11px] bg-bg2" />
       </div>
     );
   }
@@ -107,28 +108,31 @@ export default function PrivacyCard({ leagueId, leagueSlug, onSaved }: PrivacyCa
   };
 
   return (
-    <div className="bg-card rounded-lg border border-edge p-4">
-      <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-3">League Privacy</h2>
+    <div className="rounded-[18px] border border-edge bg-card px-[26px] pb-7 pt-[26px]">
+      <h2 className="m-0 mb-1 font-sans text-xs font-semibold uppercase tracking-[2px] text-ink">
+        Privacy &amp; Access
+      </h2>
+      <p className="m-0 mb-5 text-[13px] text-muted">Control who can find and join.</p>
 
-      <div className="flex items-center gap-3">
+      <div className="mb-5 flex items-start gap-3.5">
         <ToggleSwitch checked={isPrivate} onChange={setIsPrivate} disabled={saving} />
         <div>
-          <p className="text-gray-200 text-sm font-semibold">
+          <b className="block text-sm font-semibold leading-tight text-ink">
             {isPrivate ? "Private league" : "Public league"}
-          </p>
-          <p className="text-gray-500 text-xs">
+          </b>
+          <span className="mt-[3px] block text-[12.5px] leading-normal text-muted">
             {isPrivate
-              ? "Only members can see this league. The invite link still works; joining by league ID requires the password."
+              ? "Only members can see it. The invite link still works; joining by ID requires the password."
               : "Anyone with the link can view standings. Only members can chat or play."}
-          </p>
+          </span>
         </div>
       </div>
 
-      <div className="mt-4">
-        <label className="text-gray-400 text-xs uppercase tracking-wide block mb-1.5">
+      <div>
+        <div className="mb-[9px] text-[10.5px] uppercase tracking-[1.6px] text-faint">
           League password
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
           <PasswordInput
             value={password}
             onChange={setPassword}
@@ -142,39 +146,37 @@ export default function PrivacyCard({ leagueId, leagueSlug, onSaved }: PrivacyCa
           <button
             onClick={save}
             disabled={!canSave}
-            className="px-4 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-40"
+            className="inline-flex h-[46px] cursor-pointer items-center justify-center whitespace-nowrap rounded-[11px] border border-edge bg-transparent px-[18px] text-[13px] font-medium text-text transition-colors hover:border-gold/50 hover:text-gold2 disabled:opacity-40"
           >
-            {saving ? "Saving…" : justSaved && !dirty ? "Saved ✓" : "Save"}
+            {saving ? "Saving…" : justSaved && !dirty ? "Saved" : "Save"}
           </button>
         </div>
         {passwordTooShort && (
-          <p className="text-gray-500 text-xs mt-1.5">
+          <p className="mt-1.5 text-xs text-muted">
             Passwords need at least {MIN_PASSWORD} characters.
           </p>
         )}
         {missingPassword && (
-          <p className="text-gray-500 text-xs mt-1.5">
+          <p className="mt-1.5 text-xs text-muted">
             Set a league password to make the league private.
           </p>
         )}
-        {error && <p className="text-red-400 text-xs mt-1.5">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-rose">{error}</p>}
       </div>
 
       {/* League ID — the other half of the join combo */}
-      <div className="mt-4 pt-4 border-t border-edge">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-gray-400 text-xs uppercase tracking-wide">League ID</span>
-          <code className="text-brand bg-card-inset border border-edge rounded-lg px-3 py-1.5 text-sm font-mono font-semibold">
-            {leagueSlug}
-          </code>
-          <button
-            onClick={copyLeagueId}
-            className="text-gray-500 text-xs hover:text-white transition-colors cursor-pointer"
-          >
-            {copiedId ? "Copied ✓" : "Copy"}
-          </button>
-        </div>
-        <p className="text-gray-500 text-xs mt-1.5">
+      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line2 pt-[18px]">
+        <span className="text-[10.5px] uppercase tracking-[1.6px] text-faint">League ID</span>
+        <code className="rounded-lg border border-gold/30 bg-goldsoft px-[11px] py-[5px] font-mono text-[13px] text-gold2">
+          {leagueSlug}
+        </code>
+        <button
+          onClick={copyLeagueId}
+          className="cursor-pointer text-[12.5px] text-muted transition-colors hover:text-gold2"
+        >
+          {copiedId ? "Copied" : "Copy"}
+        </button>
+        <p className="mt-1.5 w-full text-xs text-muted">
           Members can join with this league ID plus the password — or just use the invite link.
         </p>
       </div>
