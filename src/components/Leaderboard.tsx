@@ -8,6 +8,7 @@ import { Entry } from "@/lib/types";
 import EventHeader from "./EventHeader";
 import EntryRow from "./EntryRow";
 import TiebreakerPanel from "./TiebreakerPanel";
+import ChampionBanner from "./ChampionBanner";
 
 interface LeaderboardProps {
   tournamentId: TournamentId;
@@ -57,6 +58,7 @@ export default function Leaderboard({
 
   const standings = calculateStandings(entries, data);
   const isLive = data.status === "in";
+  const isFinal = data.status === "post";
 
   return (
     <div className="min-h-screen bg-surface">
@@ -86,8 +88,13 @@ export default function Leaderboard({
           </div>
         ) : (
           <>
+            {isFinal && (
+              <div className="pt-7">
+                <ChampionBanner standing={standings[0]} />
+              </div>
+            )}
             <div className="text-right text-[11px] tracking-[1.8px] uppercase text-faint px-1.5 pt-6 pb-4">
-              Best 5 of 8 scores count
+              {isFinal ? "Final · best 5 of 8 counted" : "Best 5 of 8 scores count"}
             </div>
             <div className="space-y-[13px]">
               {standings.map((standing) => (
