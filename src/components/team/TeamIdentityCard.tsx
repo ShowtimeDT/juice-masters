@@ -94,21 +94,21 @@ export default function TeamIdentityCard({ leagueId, member, onUpdated }: TeamId
   };
 
   return (
-    <div className="bg-card rounded-lg border border-edge p-5 flex items-center gap-5">
+    <div className="bg-card rounded-2xl border border-edge px-[26px] py-[22px] flex items-center gap-[22px]">
       {/* Team photo */}
       <button
         onClick={() => fileRef.current?.click()}
-        className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-avatar ring-1 ring-white/10 shrink-0 cursor-pointer group"
+        className="relative w-[76px] h-[76px] rounded-2xl overflow-hidden bg-surface2 shadow-[0_0_0_1px_var(--line)] shrink-0 cursor-pointer group"
         title="Change team photo"
       >
         {member.team_photo ? (
           <Image src={member.team_photo} alt={teamName} fill className="object-cover" unoptimized />
         ) : (
-          <span className="w-full h-full flex items-center justify-center text-gray-500 font-serif font-bold text-3xl">
+          <span className="w-full h-full flex items-center justify-center text-gold2 font-serif font-semibold text-3xl">
             {teamName[0]?.toUpperCase()}
           </span>
         )}
-        <span className="absolute inset-0 hidden group-hover:flex items-center justify-center bg-black/50 text-white text-[10px] uppercase tracking-wider font-semibold">
+        <span className="absolute inset-0 hidden group-hover:flex items-center justify-center bg-black/50 text-ink text-[10px] uppercase tracking-wider font-semibold">
           Change
         </span>
       </button>
@@ -137,40 +137,38 @@ export default function TeamIdentityCard({ leagueId, member, onUpdated }: TeamId
                 if (e.key === "Enter") saveName();
                 if (e.key === "Escape") setEditingName(false);
               }}
-              className="flex-1 min-w-0 bg-card-inset border border-edge rounded-lg px-3 py-2 text-white text-lg font-serif focus:outline-none focus:border-brand"
+              className="flex-1 min-w-0 bg-card-inset border border-edge rounded-lg px-3 py-2 text-ink text-[30px] leading-none font-serif font-semibold focus:outline-none focus:border-gold"
             />
             <button
               onClick={saveName}
               disabled={saving}
-              className="px-3 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover cursor-pointer disabled:opacity-50 shrink-0"
+              className="px-4 py-2 btn-gold font-semibold text-xs rounded-lg cursor-pointer disabled:opacity-50 shrink-0"
             >
               {saving ? "Saving..." : "Save"}
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-white font-serif font-bold text-2xl truncate">{teamName}</h2>
+          <div className="flex items-center gap-[11px] min-w-0">
+            <h2 className="font-serif font-semibold text-[30px] leading-none text-ink truncate">{teamName}</h2>
             <button
               onClick={() => {
                 setNameDraft(teamName);
                 setEditingName(true);
               }}
-              className="text-gray-500 hover:text-brand transition-colors cursor-pointer shrink-0"
+              className="text-faint hover:text-gold transition-colors cursor-pointer shrink-0"
               title="Edit team name"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
+                <path d="M4 20h4L19 9l-4-4L4 16v4z" strokeWidth={1.8} strokeLinejoin="round" />
+                <path d="M14 6l4 4" strokeWidth={1.8} />
               </svg>
             </button>
           </div>
         )}
-        <p className="text-gray-500 text-xs mt-1">Managed by {member.display_name}</p>
-        {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+        <p className="text-muted text-[13px] tracking-[0.3px] mt-1.5">
+          Managed by {member.display_name} · 8 picks · best 5 of 8 count
+        </p>
+        {error && <p className="text-rose text-xs mt-1">{error}</p>}
       </div>
     </div>
   );

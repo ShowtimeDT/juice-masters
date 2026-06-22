@@ -1,55 +1,81 @@
 import { HoleScore, RoundScore } from "@/lib/types";
-import { scoreColor } from "@/lib/format";
 
 /**
- * Golf-notation hole cell: circles for under par (double ring = eagle+),
- * squares for over par (double ring = double bogey+), bare number for par.
+ * Golf-notation hole cell, matching the design scorecard:
+ *  - eagle+ : gold ring + soft gold halo, gold text
+ *  - birdie : sage ring, sage text
+ *  - par    : bare muted number
+ *  - bogey  : rose rounded-square ring, rose text
+ *  - double+: filled rose square, dark text
+ *  - blank  : faint dash for an unplayed hole
  */
-function holeStyle(toPar: number): string {
-  if (toPar <= -2) return "rounded-full ring-2 ring-brand text-brand";
-  if (toPar === -1) return "rounded-full ring-1 ring-under text-under";
-  if (toPar === 0) return "text-gray-300";
-  if (toPar === 1) return "rounded-sm ring-1 ring-over/70 text-over";
-  return "rounded-sm ring-2 ring-over text-over";
+function shapeClass(toPar: number): string {
+  if (toPar <= -2)
+    return "border-[1.5px] border-gold rounded-full shadow-[0_0_0_2px_rgba(201,162,75,0.22)] text-gold2";
+  if (toPar === -1) return "border-[1.5px] border-sage rounded-full text-sage";
+  if (toPar === 0) return "text-muted";
+  if (toPar === 1) return "border-[1.5px] border-rose rounded-[7px] text-rose";
+  return "bg-rose rounded-[7px] text-[#1A1408] font-semibold";
 }
 
 function HoleCell({ hole }: { hole: HoleScore }) {
   return (
-    <div className="flex flex-col items-center gap-1 shrink-0">
-      <span className="text-[9px] text-faint">{hole.hole}</span>
-      <span
-        className={`w-6 h-6 flex items-center justify-center text-[11px] font-mono tabular-nums ${holeStyle(hole.toPar)}`}
+    <div className="flex items-center justify-center h-9">
+      <i
+        className={`w-[27px] h-[27px] flex items-center justify-center not-italic text-[13px] font-medium tnum text-ink ${shapeClass(
+          hole.toPar
+        )}`}
       >
         {hole.strokes}
-      </span>
+      </i>
     </div>
   );
 }
 
-/** One round: holes 1–18 on a single line, round total at the end. */
+const ROW_GRID =
+  "grid grid-cols-[repeat(9,1fr)_50px] sm:grid-cols-[repeat(18,1fr)_56px] items-center";
+
+function totalColor(score: number): string {
+  if (score < 0) return "text-sage";
+  if (score > 0) return "text-rose";
+  return "text-ink";
+}
+
+/** One round: holes 1–18 with a hole-number header row, round total at the end. */
 export function RoundHoles({ round }: { round: RoundScore }) {
   const holes = round.holes ?? [];
   if (holes.length === 0) return null;
   const totalToPar = round.score === "E" ? 0 : parseInt(round.score, 10) || 0;
 
   return (
-    <div className="py-3 border-b border-white/5 last:border-0">
-      <span className="block text-[10px] uppercase tracking-wider text-faint font-semibold mb-2">
+    <div>
+      <div className="text-[10.5px] tracking-[2px] uppercase text-faint pt-3.5 pb-2.5">
         Round {round.round}
-      </span>
-      <div className="flex items-end gap-1 sm:gap-1.5 overflow-x-auto px-1 pb-1">
-        {holes.map((h) => (
-          <HoleCell key={h.hole} hole={h} />
-        ))}
-        {/* Round total after hole 18 */}
-        <div className="flex flex-col items-center gap-1 shrink-0 pl-2 sm:pl-3 ml-1 border-l border-white/10">
-          <span className="text-[9px] text-faint uppercase">Tot</span>
+      </div>
+      {/* Hole numbers (1–18, hidden 10–18 on narrow) + "Tot" */}
+      <div className={`${ROW_GRID}`}>
+        {holes.map((h, i) => (
           <span
-            className={`h-6 flex items-center text-[12px] font-mono font-bold tabular-nums ${scoreColor(totalToPar)}`}
+            key={h.hole}
+            className={`text-center text-[10px] text-faint tnum ${i >= 9 ? "hidden sm:block" : ""}`}
           >
-            {round.score}
+            {h.hole}
           </span>
-        </div>
+        ))}
+        <span className="text-center text-[9px] font-semibold tracking-[1px] uppercase text-muted">
+          Tot
+        </span>
+      </div>
+      {/* Hole strokes + round total */}
+      <div className={`${ROW_GRID} mt-1`}>
+        {holes.map((h, i) => (
+          <div key={h.hole} className={i >= 9 ? "hidden sm:flex" : "flex"}>
+            <HoleCell hole={h} />
+          </div>
+        ))}
+        <span className={`text-center font-semibold text-[15px] tnum ${totalColor(totalToPar)}`}>
+          {round.score}
+        </span>
       </div>
     </div>
   );
@@ -57,18 +83,22 @@ export function RoundHoles({ round }: { round: RoundScore }) {
 
 export function HoleLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-3 text-[10px] text-faint">
-      <span className="flex items-center gap-1.5">
-        <span className="w-3.5 h-3.5 rounded-full ring-2 ring-brand inline-block" /> Eagle+
+    <div className="flex flex-wrap gap-x-[22px] gap-y-2 mt-4">
+      <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
+        <i className="w-[15px] h-[15px] border-[1.5px] border-gold rounded-full shadow-[0_0_0_1.5px_rgba(201,162,75,0.22)]" />
+        Eagle+
       </span>
-      <span className="flex items-center gap-1.5">
-        <span className="w-3.5 h-3.5 rounded-full ring-1 ring-under inline-block" /> Birdie
+      <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
+        <i className="w-[15px] h-[15px] border-[1.5px] border-sage rounded-full" />
+        Birdie
       </span>
-      <span className="flex items-center gap-1.5">
-        <span className="w-3.5 h-3.5 rounded-sm ring-1 ring-over/70 inline-block" /> Bogey
+      <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
+        <i className="w-[15px] h-[15px] border-[1.5px] border-rose rounded" />
+        Bogey
       </span>
-      <span className="flex items-center gap-1.5">
-        <span className="w-3.5 h-3.5 rounded-sm ring-2 ring-over inline-block" /> Double+
+      <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
+        <i className="w-[15px] h-[15px] bg-rose rounded" />
+        Double+
       </span>
     </div>
   );
