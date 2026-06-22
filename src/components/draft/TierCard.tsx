@@ -2,6 +2,7 @@
 
 import { DraftGolfer } from "@/lib/draft/types";
 import { TournamentTheme } from "@/lib/tournaments";
+import Headshot from "@/components/ui/Headshot";
 
 interface TierCardProps {
   tierName: string;
@@ -10,32 +11,39 @@ interface TierCardProps {
   selectedGolfer: string | null;
   onSelect: (name: string) => void;
   disabled: boolean;
+  /** Kept for API compatibility; the redesign uses the centralized gold tokens. */
   theme: TournamentTheme;
 }
 
+const lastName = (name: string) => name.split(" ").pop() || name;
+
 export default function TierCard({
-  tierName,
   tierNumber,
   golfers,
   selectedGolfer,
   onSelect,
   disabled,
-  theme,
 }: TierCardProps) {
+  const picked = Boolean(selectedGolfer);
+
   return (
-    <div className="bg-card rounded-lg border border-edge overflow-hidden">
+    <div
+      className={`flex flex-col overflow-hidden rounded-[14px] bg-card border transition-colors ${
+        picked ? "border-gold/30" : "border-edge"
+      }`}
+    >
       {/* Tier header */}
-      <div className="px-4 py-2.5 border-b border-edge flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
-          {tierName}
-        </span>
-        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: theme.accentMuted }}>
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-line2 bg-bg2">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">
           Tier {tierNumber}
+        </span>
+        <span className={`text-[10.5px] ${picked ? "text-sage" : "text-faint"}`}>
+          {picked ? lastName(selectedGolfer as string) : "Pick one"}
         </span>
       </div>
 
       {/* Golfer list */}
-      <div className="divide-y divide-white/5">
+      <div className="p-1.5">
         {golfers.map((golfer) => {
           const isSelected = selectedGolfer === golfer.name;
           return (
@@ -43,19 +51,35 @@ export default function TierCard({
               key={golfer.name}
               onClick={() => !disabled && onSelect(golfer.name)}
               disabled={disabled}
-              className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
-                disabled ? "cursor-default" : "cursor-pointer hover:bg-white/5"
-              }`}
-              style={isSelected ? { backgroundColor: theme.highlightBg } : undefined}
+              className={`group flex w-full items-center gap-2.5 rounded-[9px] px-2 py-1.5 text-left transition-colors ${
+                disabled ? "cursor-default" : "cursor-pointer hover:bg-white/[0.03]"
+              } ${isSelected ? "bg-goldsoft" : ""}`}
             >
-              <span className={`text-sm ${isSelected ? "text-white font-medium" : "text-gray-400"}`}>
+              <Headshot name={golfer.name} espnId={golfer.espn_id || undefined} size={28} />
+              <span
+                className={`min-w-0 flex-1 truncate text-[13px] ${
+                  isSelected ? "text-ink font-medium" : "text-text"
+                }`}
+              >
                 {golfer.name}
               </span>
-              {isSelected && (
-                <svg className="w-4 h-4 shrink-0" style={{ color: theme.badgeText }} fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <span
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                  isSelected
+                    ? "border-transparent bg-gradient-to-b from-gold2 to-gold text-[#1A1408]"
+                    : "border-edge text-transparent group-hover:border-faint"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3">
+                  <path
+                    d="M5 12l5 5L19 7"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
-              )}
+              </span>
             </button>
           );
         })}
