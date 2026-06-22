@@ -1,79 +1,98 @@
+import type { CSSProperties } from "react";
 import { HoleScore, RoundScore } from "@/lib/types";
 
-/**
- * Golf-notation hole cell, matching the design scorecard:
- *  - eagle+ : gold ring + soft gold halo, gold text
- *  - birdie : sage ring, sage text
- *  - par    : bare muted number
- *  - bogey  : rose rounded-square ring, rose text
- *  - double+: filled rose square, dark text
- *  - blank  : faint dash for an unplayed hole
+/*
+ * Hole-by-hole scorecard. Every round renders on ONE shared, fixed-width grid so
+ * hole-number labels sit exactly above their scores and all four rounds align with
+ * each other. Columns are fixed px (not 1fr) so the markers stay square and the
+ * whole card scrolls horizontally on narrow screens instead of wrapping.
+ *
+ * Layout per row: 18 hole columns + a thin spacer + a TOT column. Both the
+ * number row and the score row use the identical template (GRID_COLS).
  */
-function shapeClass(toPar: number): string {
+const HOLE_W = 30; // px per hole column
+const SPACER_W = 12; // gap before TOT
+const TOT_W = 56; // TOT column
+const MARKER = 27; // square marker diameter (design: 27px)
+
+const GRID_COLS: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: `repeat(18, ${HOLE_W}px) ${SPACER_W}px ${TOT_W}px`,
+  alignItems: "center",
+};
+
+/** Marker styling by score-to-par, matching the design scorecard. */
+function markerClass(toPar: number): string {
   if (toPar <= -2)
-    return "border-[1.5px] border-gold rounded-full shadow-[0_0_0_2px_rgba(201,162,75,0.22)] text-gold2";
-  if (toPar === -1) return "border-[1.5px] border-sage rounded-full text-sage";
-  if (toPar === 0) return "text-muted";
-  if (toPar === 1) return "border-[1.5px] border-rose rounded-[7px] text-rose";
-  return "bg-rose rounded-[7px] text-[#1A1408] font-semibold";
+    return "border-[1.5px] border-gold rounded-full shadow-[0_0_0_2px_rgba(201,162,75,0.22)] text-gold2"; // eagle+
+  if (toPar === -1) return "border-[1.5px] border-sage rounded-full text-sage"; // birdie
+  if (toPar === 0) return "text-muted"; // par
+  if (toPar === 1) return "border-[1.5px] border-rose rounded-[7px] text-rose"; // bogey
+  return "bg-rose rounded-[7px] text-[#1A1408] font-semibold"; // double+
 }
 
-function HoleCell({ hole }: { hole: HoleScore }) {
+/** A single fixed-size, centered hole cell — the marker never changes the cell width. */
+function HoleCell({ hole }: { hole: HoleScore | null }) {
   return (
-    <div className="flex items-center justify-center h-9">
-      <i
-        className={`w-[27px] h-[27px] flex items-center justify-center not-italic text-[13px] font-medium tnum text-ink ${shapeClass(
-          hole.toPar
-        )}`}
+    <div className="flex items-center justify-center h-[34px]">
+      <span
+        className={`flex items-center justify-center not-italic text-[13px] font-medium tnum ${
+          hole ? markerClass(hole.toPar) : "text-faint opacity-45"
+        }`}
+        style={{ width: MARKER, height: MARKER }}
       >
-        {hole.strokes}
-      </i>
+        {hole ? hole.strokes : "–"}
+      </span>
     </div>
   );
 }
 
-const ROW_GRID =
-  "grid grid-cols-[repeat(9,1fr)_50px] sm:grid-cols-[repeat(18,1fr)_56px] items-center";
-
-function totalColor(score: number): string {
-  if (score < 0) return "text-sage";
-  if (score > 0) return "text-rose";
-  return "text-ink";
+function totalColor(score: string): string {
+  if (score === "E" || score === "0") return "text-ink";
+  if (score.startsWith("-")) return "text-sage";
+  return "text-rose";
 }
 
-/** One round: holes 1–18 with a hole-number header row, round total at the end. */
+/** One round: a hole-number header row and a score row on the same fixed grid. */
 export function RoundHoles({ round }: { round: RoundScore }) {
   const holes = round.holes ?? [];
   if (holes.length === 0) return null;
-  const totalToPar = round.score === "E" ? 0 : parseInt(round.score, 10) || 0;
+
+  // Index by hole number so every round always renders all 18 columns (missing
+  // holes show a blank dash) — this keeps every round aligned with the others.
+  const byHole = new Map(holes.map((h) => [h.hole, h]));
+  const cells = Array.from({ length: 18 }, (_, i) => byHole.get(i + 1) ?? null);
 
   return (
-    <div>
-      <div className="text-[10.5px] tracking-[2px] uppercase text-faint pt-3.5 pb-2.5">
+    <div className="pt-3.5">
+      <div className="text-[10.5px] tracking-[2px] uppercase text-faint pb-2.5">
         Round {round.round}
       </div>
-      {/* Hole numbers (1–18, hidden 10–18 on narrow) + "Tot" */}
-      <div className={`${ROW_GRID}`}>
-        {holes.map((h, i) => (
-          <span
-            key={h.hole}
-            className={`text-center text-[10px] text-faint tnum ${i >= 9 ? "hidden sm:block" : ""}`}
-          >
-            {h.hole}
+
+      {/* Hole numbers + TOT label */}
+      <div style={GRID_COLS}>
+        {cells.map((_, i) => (
+          <span key={i} className="text-center text-[10px] text-faint tnum">
+            {i + 1}
           </span>
         ))}
-        <span className="text-center text-[9px] font-semibold tracking-[1px] uppercase text-muted">
+        <span />
+        <span className="text-right text-[9px] font-semibold tracking-[1px] uppercase text-muted border-l border-line2 pl-1.5">
           Tot
         </span>
       </div>
-      {/* Hole strokes + round total */}
-      <div className={`${ROW_GRID} mt-1`}>
-        {holes.map((h, i) => (
-          <div key={h.hole} className={i >= 9 ? "hidden sm:flex" : "flex"}>
-            <HoleCell hole={h} />
-          </div>
+
+      {/* Scores + round total */}
+      <div style={GRID_COLS} className="mt-1">
+        {cells.map((hole, i) => (
+          <HoleCell key={i} hole={hole} />
         ))}
-        <span className={`text-center font-semibold text-[15px] tnum ${totalColor(totalToPar)}`}>
+        <span />
+        <span
+          className={`flex items-center justify-end h-[34px] text-[15px] font-semibold tnum border-l border-line2 pl-1.5 ${totalColor(
+            round.score
+          )}`}
+        >
           {round.score}
         </span>
       </div>
@@ -93,11 +112,11 @@ export function HoleLegend() {
         Birdie
       </span>
       <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
-        <i className="w-[15px] h-[15px] border-[1.5px] border-rose rounded" />
+        <i className="w-[15px] h-[15px] border-[1.5px] border-rose rounded-[4px]" />
         Bogey
       </span>
       <span className="flex items-center gap-2 text-[11px] tracking-[0.5px] text-muted">
-        <i className="w-[15px] h-[15px] bg-rose rounded" />
+        <i className="w-[15px] h-[15px] bg-rose rounded-[4px]" />
         Double+
       </span>
     </div>

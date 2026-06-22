@@ -124,12 +124,15 @@ export default function TeamGolferRow({ golfer, counting, isFinal = false }: Tea
         </span>
       </button>
 
-      {/* Hole-by-hole scorecard */}
+      {/* Hole-by-hole scorecard — rounds share one horizontal scroller so they
+          stay aligned and scroll together on narrow screens; legend stays fixed. */}
       {open && hasHoles && (
-        <div className="border-t border-line2 mx-[14px] px-[10px] pb-[22px] overflow-x-auto">
-          {score.rounds.map((round) => (
-            <RoundHoles key={round.round} round={round} />
-          ))}
+        <div className="border-t border-line2 mx-[14px] px-[10px] pb-[22px]">
+          <div className="overflow-x-auto">
+            {score.rounds.map((round) => (
+              <RoundHoles key={round.round} round={round} />
+            ))}
+          </div>
           <HoleLegend />
         </div>
       )}
