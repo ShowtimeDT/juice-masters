@@ -9,6 +9,7 @@ import TournamentTabs from "@/components/TournamentTabs";
 import AppTabs, { AppView, isAppView } from "@/components/AppTabs";
 import LeagueSwitcher from "@/components/LeagueSwitcher";
 import AccountMenu from "@/components/AccountMenu";
+import NotificationBell from "@/components/ui/NotificationBell";
 import MyTeam from "@/components/team/MyTeam";
 import LeagueChat from "@/components/chat/LeagueChat";
 import { defaultTournamentTab } from "@/lib/tournament-state";
@@ -206,6 +207,7 @@ function LeagueContent() {
             leagues={myLeagues}
             manageHref={isCommissioner ? `/league/${slug}/manage` : null}
           />
+          <NotificationBell />
           <AccountMenu loginCallbackUrl={`/league/${slug}`} />
         </AppTabs>
 
