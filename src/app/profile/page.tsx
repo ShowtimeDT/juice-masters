@@ -51,7 +51,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <TopBrandBar monogram={mono} />
+      <TopBrandBar monogram={mono} monogramVariant="gold" />
 
       <div className="mx-auto max-w-[1080px] px-7 pb-[90px]">
         {/* HERO */}

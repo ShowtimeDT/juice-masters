@@ -26,7 +26,7 @@ export default function Hero() {
         <h1 className="font-serif text-[clamp(52px,7vw,92px)] font-medium leading-[1.02] tracking-[-0.5px] text-ink">
           Fantasy golf
           <br />
-          for the <em className="not-italic font-medium italic text-gold2">majors</em>.
+          for the <em className="italic font-medium text-gold2">majors</em>.
         </h1>
 
         <p className="mx-auto mt-[26px] max-w-[40ch] text-[18.5px] leading-[1.62] text-text">

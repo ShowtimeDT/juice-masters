@@ -7,6 +7,8 @@ interface TopBrandBarProps {
   monogram?: string;
   /** Constrain the inner content to this max width (px) so it lines up with the page below. */
   maxWidth?: number;
+  /** "gold" = solid gold-gradient disc (Profile); "soft" = goldsoft tint (Settings). */
+  monogramVariant?: "gold" | "soft";
 }
 
 /**
@@ -14,7 +16,11 @@ interface TopBrandBarProps {
  * live outside any league context — just the Logo + "Juice Tour" wordmark, plus
  * a small gold monogram disc. No league tabs / switcher (that's the AppShell).
  */
-export default function TopBrandBar({ monogram, maxWidth = 1080 }: TopBrandBarProps) {
+export default function TopBrandBar({
+  monogram,
+  maxWidth = 1080,
+  monogramVariant = "soft",
+}: TopBrandBarProps) {
   return (
     <header className="sticky top-0 z-40 bg-bg2/90 backdrop-blur-md border-b border-edge">
       <div
@@ -29,7 +35,11 @@ export default function TopBrandBar({ monogram, maxWidth = 1080 }: TopBrandBarPr
         </a>
         <div className="flex-1" />
         {monogram && (
-          <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-goldsoft text-gold2 text-xs font-semibold shadow-[0_0_0_1px_var(--line)]">
+          <span
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-full text-xs font-semibold shadow-[0_0_0_1px_var(--line)] ${
+              monogramVariant === "gold" ? "btn-gold text-[#1A1408]" : "bg-goldsoft text-gold2"
+            }`}
+          >
             {monogram}
           </span>
         )}

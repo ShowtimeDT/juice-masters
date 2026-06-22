@@ -7,6 +7,13 @@ import Logo from "@/components/ui/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
 import AppTopBar from "@/components/leagues/AppTopBar";
 import { leagueMonogram } from "@/components/leagues/leagueCrest";
+import { TOURNAMENTS } from "@/lib/tournaments";
+import { getTournamentState } from "@/lib/tournament-state";
+
+/** The major currently in play, if any — for the "· {major} in play" meta line. */
+const liveMajor = TOURNAMENTS.find(
+  (t) => t.id !== "season" && getTournamentState(t) === "in-progress"
+);
 
 interface League {
   id: string;
@@ -345,6 +352,7 @@ export default function LeagueHome() {
               {leagues.length} {leagues.length === 1 ? "league" : "leagues"}
               {leagues.some((l) => l.is_commissioner) &&
                 ` · commissioner of ${leagues.filter((l) => l.is_commissioner).length}`}
+              {liveMajor && ` · ${liveMajor.shortName} in play`}
             </div>
           </div>
 
