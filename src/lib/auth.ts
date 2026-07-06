@@ -71,7 +71,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile, trigger }) {
+      // Client called useSession().update() after editing their profile —
+      // re-read the name from the database rather than trusting the client.
+      if (trigger === "update" && token.id) {
+        const sql = getDb();
+        const [dbUser] = await sql`SELECT name FROM users WHERE id = ${token.id}`;
+        if (dbUser?.name) token.name = dbUser.name as string;
+        return token;
+      }
       if (account && account.provider !== "credentials") {
         const userId = await resolveOAuthUser(account, profile);
         if (userId) {

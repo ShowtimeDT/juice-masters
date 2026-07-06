@@ -16,6 +16,18 @@ interface TierEditorProps {
   hideTopSaveButton?: boolean;
 }
 
+const ArrowUp = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ArrowDown = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfersChange, hideTopSaveButton }: TierEditorProps) {
   const [golfers, setGolfers] = useState<Golfer[]>(initialGolfers);
   const [saving, setSaving] = useState(false);
@@ -42,56 +54,67 @@ export default function TierEditor({ initialGolfers, numTiers, onSave, onGolfers
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-white font-bold text-sm uppercase tracking-wide">Review Tiers</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-sans text-[12px] font-semibold uppercase tracking-[0.16em] text-ink">
+            Review Tiers
+          </h2>
+          <p className="mt-1 text-[12.5px] text-muted">
+            Hover a golfer and use ↑ ↓ to move them between tiers.
+          </p>
+        </div>
         {!hideTopSaveButton && (
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-brand text-black font-semibold text-xs rounded-lg hover:bg-brand-hover transition-colors cursor-pointer disabled:opacity-50"
+            className="btn-gold rounded-lg px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-px cursor-pointer disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save Tier Changes"}
+            {saving ? "Saving…" : "Save Tier Changes"}
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: numTiers }, (_, i) => i + 1).map((tierNum) => {
           const tierGolfers = golfers
             .filter((g) => g.tier_number === tierNum)
             .sort((a, b) => a.name.localeCompare(b.name));
 
           return (
-            <div key={tierNum} className="bg-card-inset rounded-lg border border-edge overflow-hidden">
-              <div className="px-3 py-2 border-b border-edge flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider text-faint font-semibold">
+            <div key={tierNum} className="flex flex-col overflow-hidden rounded-[14px] border border-edge bg-card">
+              <div className="flex items-center justify-between border-b border-line2 bg-bg2 px-3.5 py-3">
+                <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-gold">
                   Tier {tierNum}
                 </span>
-                <span className="text-[10px] text-gray-500">{tierGolfers.length} golfers</span>
+                <span className="text-[10.5px] text-faint">
+                  {tierGolfers.length} golfer{tierGolfers.length !== 1 ? "s" : ""}
+                </span>
               </div>
-              <div className="max-h-[20rem] overflow-y-auto">
+              <div className="max-h-[20rem] overflow-y-auto p-1.5">
                 {tierGolfers.map((g) => (
                   <div
                     key={g.name}
-                    className="flex items-center justify-between px-2 py-1.5 border-b border-white/5 last:border-0 text-xs"
+                    className="group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.025]"
                   >
-                    <span className="text-gray-300 truncate flex-1">{g.name}</span>
-                    <div className="flex gap-0.5 shrink-0 ml-1">
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-text">{g.name}</span>
+                    <div className="flex shrink-0 gap-0.5 opacity-50 transition-opacity group-hover:opacity-100">
                       <button
                         onClick={() => moveGolfer(g.name, tierNum, tierNum - 1)}
                         disabled={tierNum === 1}
-                        className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default"
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-edge text-muted transition-colors hover:border-gold/50 hover:text-gold2 disabled:cursor-not-allowed disabled:opacity-25 cursor-pointer"
                         title={`Move to Tier ${tierNum - 1}`}
+                        aria-label="Move up a tier"
                       >
-                        ↑
+                        <ArrowUp />
                       </button>
                       <button
                         onClick={() => moveGolfer(g.name, tierNum, tierNum + 1)}
                         disabled={tierNum === numTiers}
-                        className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-white disabled:opacity-20 cursor-pointer disabled:cursor-default"
+                        className="flex h-6 w-6 items-center justify-center rounded-md border border-edge text-muted transition-colors hover:border-gold/50 hover:text-gold2 disabled:cursor-not-allowed disabled:opacity-25 cursor-pointer"
                         title={`Move to Tier ${tierNum + 1}`}
+                        aria-label="Move down a tier"
                       >
-                        ↓
+                        <ArrowDown />
                       </button>
                     </div>
                   </div>

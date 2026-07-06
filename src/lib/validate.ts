@@ -30,6 +30,17 @@ export function validLeaguePassword(value: unknown): value is string {
   return typeof value === "string" && value.length >= 4 && value.length <= 72;
 }
 
+/**
+ * Usernames: 3–30 chars, letters/numbers/underscores, stored lowercase.
+ * Returns the normalized handle, or null if invalid.
+ */
+export function cleanUsername(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().replace(/^@/, "").toLowerCase();
+  if (!/^[a-z0-9_]{3,30}$/.test(trimmed)) return null;
+  return trimmed;
+}
+
 /** Chat messages: trimmed, 1–1000 chars. Returns null if invalid. */
 export function cleanMessage(value: unknown): string | null {
   if (typeof value !== "string") return null;

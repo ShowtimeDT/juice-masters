@@ -1,112 +1,90 @@
-import Image from "next/image";
-import Link from "next/link";
-import { getTournament, withAlpha } from "@/lib/tournaments";
-
-const mastersGreen = getTournament("masters").theme.primary;
-
-function CtaButton({
-  href,
-  children,
-  primary = false,
-}: {
-  href: string;
-  children: React.ReactNode;
-  primary?: boolean;
-}) {
-  const style = primary
-    ? "bg-brand text-black hover:bg-brand-hover glow-brand"
-    : "bg-white/10 text-white border border-white/20 hover:bg-white/20";
-  return (
-    <Link
-      href={href}
-      className={`px-6 py-3 font-semibold text-sm rounded-lg transition-colors ${style}`}
-    >
-      {children}
-    </Link>
-  );
-}
+import Logo from "@/components/ui/Logo";
+import ProductShot from "./ProductShot";
+import { GoldButton, GhostButton, LINKS } from "./buttons";
 
 export default function Hero() {
   return (
-    <header className="relative overflow-hidden">
-      {/* Course photograph */}
-      <Image
-        src="/hero-course.jpg"
-        alt="Sunrise over a championship golf course"
-        fill
-        className="object-cover"
-        priority
-      />
-
-      {/* Darken for text legibility, melting into the page background */}
+    <section className="relative overflow-hidden px-6 pb-[70px] pt-[150px] text-center sm:px-10">
+      {/* Gold radial glow behind the emblem */}
       <div
-        className="absolute inset-0"
+        className="pointer-events-none absolute left-1/2 top-[-12%] h-[520px] w-[760px] -translate-x-1/2"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,13,12,0.6) 0%, rgba(10,13,12,0.5) 45%, var(--color-surface) 100%)",
+            "radial-gradient(ellipse, rgba(201,162,75,0.14), transparent 64%)",
         }}
       />
 
-      {/* Extra scrim focused behind the text column */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(60% 70% at 50% 48%, rgba(10,13,12,0.45), transparent 75%)",
-        }}
-      />
+      <div className="relative mx-auto max-w-[1140px]">
+        {/* Dawn emblem */}
+        <div className="mb-[26px] flex flex-col items-center">
+          <Logo size={92} />
+          <span className="mt-2 text-[11px] font-medium uppercase tracking-[3px] text-muted">
+            Four Majors
+          </span>
+        </div>
 
-      {/* Faint Masters-green tint for brand warmth */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(55% 60% at 50% 32%, ${withAlpha(mastersGreen, 0.12)}, transparent 70%)`,
-        }}
-      />
-
-      {/* Film grain — masks upscaling softness on large screens */}
-      <div
-        className="absolute inset-0 opacity-[0.12] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
-
-      <div className="relative max-w-5xl mx-auto px-4 pt-16 pb-20 sm:pt-20 sm:pb-24 text-center">
-        <Image
-          src="/logo-v3.png"
-          alt="Juice Tour logo"
-          width={130}
-          height={150}
-          className="mx-auto drop-shadow-lg w-[90px] h-[104px] sm:w-[130px] sm:h-[150px]"
-          priority
-        />
-        <h1 className="mt-4 text-4xl sm:text-6xl font-serif font-bold text-white uppercase tracking-[0.18em] text-shadow-hero">
-          Juice Tour
+        <h1 className="font-serif text-[clamp(52px,7vw,92px)] font-medium leading-[1.02] tracking-[-0.5px] text-ink">
+          Fantasy golf
+          <br />
+          for the <em className="italic font-medium text-gold2">majors</em>.
         </h1>
-        <p className="mt-3 text-xs uppercase tracking-[0.1em] text-brand font-medium text-shadow-hero">
-          Fantasy golf for the majors
-        </p>
-        <p className="mt-5 max-w-2xl mx-auto text-gray-200 text-sm sm:text-base text-shadow-hero">
-          Draft a team of 8 pros with your friends before each major, then sweat
-          every putt together. Live scoring all weekend, season-long bragging
-          rights, zero spreadsheets.
+
+        <p className="mx-auto mt-[26px] max-w-[40ch] text-[18.5px] leading-[1.62] text-text">
+          Draft a team of eight pros with your friends before each major, then
+          sweat every putt together — live scoring, season-long bragging rights,
+          zero spreadsheets.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <CtaButton href="/login?callbackUrl=/?create=1" primary>
-            Create a League
-          </CtaButton>
-          <CtaButton href="/login?callbackUrl=/?join=1">Join a League</CtaButton>
-          <Link
-            href="/login?callbackUrl=/"
-            className="px-4 py-3 text-gray-300 text-sm hover:text-white transition-colors"
-          >
-            Sign In →
-          </Link>
+        <div className="mt-[34px] flex flex-wrap justify-center gap-[14px]">
+          <GoldButton href={LINKS.create}>Create a League</GoldButton>
+          <GhostButton href={LINKS.join}>Join a League</GhostButton>
+        </div>
+
+        <p className="mt-5 text-[13px] tracking-[0.3px] text-faint">
+          Sign in with Google or email · Free to play
+        </p>
+
+        {/* Product shot — the real Standings cards in an app window */}
+        <AppFrame />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Browser-chrome "app window" wrapping the real Standings demo. The window bar
+ * carries the Dawn mark, wordmark, and the Standings/My Team/Chat tabs; the
+ * body renders <ProductShot/> — the live Standings board built from the same
+ * DEMO_STANDINGS as the rest of the marketing demo.
+ */
+function AppFrame() {
+  return (
+    <div
+      className="relative mx-auto mt-[62px] max-w-[980px] overflow-hidden rounded-[18px] border border-edge bg-surface text-left"
+      style={{
+        boxShadow:
+          "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,162,75,0.06)",
+      }}
+    >
+      <div className="flex h-[54px] items-center justify-between gap-6 border-b border-edge bg-bg2/60 px-[22px]">
+        <div className="flex items-center gap-2.5">
+          <Logo size={24} arched={false} />
+          <b className="whitespace-nowrap font-serif text-[17px] font-semibold text-ink">
+            Juice Tour
+          </b>
+        </div>
+        <div className="hidden h-[54px] items-stretch gap-[22px] sm:flex">
+          <span className="flex items-center border-b-2 border-gold text-[12.5px] font-medium text-ink">
+            Standings
+          </span>
+          <span className="flex items-center text-[12.5px] text-muted">
+            My Team
+          </span>
+          <span className="flex items-center text-[12.5px] text-muted">Chat</span>
         </div>
       </div>
-    </header>
+
+      <ProductShot />
+    </div>
   );
 }

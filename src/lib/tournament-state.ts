@@ -32,15 +32,44 @@ export function getTournamentState(config: TournamentConfig): TournamentState {
   return "upcoming";
 }
 
+/** End-of-play date (last round, end of day) parsed from espnDatesParam. */
+function majorEndDate(config: TournamentConfig): Date | null {
+  const end = config.espnDatesParam.split("-")[1];
+  if (!end || end.length < 8) return null;
+  return new Date(
+    parseInt(end.slice(0, 4)),
+    parseInt(end.slice(4, 6)) - 1,
+    parseInt(end.slice(6, 8)),
+    23,
+    59,
+    59
+  );
+}
+
+/** Keep showing a finished major for a week after it ends. */
+const POST_MAJOR_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 /**
  * The tournament tab a league page should open on: the live major during
- * tournament week, the season standings otherwise.
+ * tournament week, the most recent major for a week after it finishes, then the
+ * season standings.
  */
 export function defaultTournamentTab(): TournamentId {
-  const live = TOURNAMENTS.find(
-    (t) => t.id !== "season" && getTournamentState(t) === "in-progress"
-  );
-  return live?.id ?? "season";
+  const majors = TOURNAMENTS.filter((t) => t.id !== "season");
+  const live = majors.find((t) => getTournamentState(t) === "in-progress");
+  if (live) return live.id;
+
+  const now = Date.now();
+  const recent = majors
+    .filter((t) => getTournamentState(t) === "completed")
+    .map((t) => ({ t, end: majorEndDate(t) }))
+    .filter(
+      (x): x is { t: TournamentConfig; end: Date } =>
+        x.end !== null && now - x.end.getTime() <= POST_MAJOR_WINDOW_MS
+    )
+    .sort((a, b) => b.end.getTime() - a.end.getTime())[0];
+
+  return recent ? recent.t.id : "season";
 }
 
 /**

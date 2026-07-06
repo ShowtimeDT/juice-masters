@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getTournament, isTournamentId, TournamentId } from "@/lib/tournaments";
-import TournamentTabs from "@/components/TournamentTabs";
 import AppTabs, { AppView, isAppView } from "@/components/AppTabs";
 import LeagueSwitcher from "@/components/LeagueSwitcher";
 import AccountMenu from "@/components/AccountMenu";
+import NotificationBell from "@/components/ui/NotificationBell";
 import MyTeam from "@/components/team/MyTeam";
 import LeagueChat from "@/components/chat/LeagueChat";
 import { defaultTournamentTab } from "@/lib/tournament-state";
 import DraftAwareTournament from "@/components/DraftAwareTournament";
+import EventHeader from "@/components/EventHeader";
 import SeasonLeaderboard from "@/components/SeasonLeaderboard";
 
 interface LeagueInfo {
@@ -206,25 +207,33 @@ function LeagueContent() {
             leagues={myLeagues}
             manageHref={isCommissioner ? `/league/${slug}/manage` : null}
           />
+          <NotificationBell />
           <AccountMenu loginCallbackUrl={`/league/${slug}`} />
         </AppTabs>
 
-        {activeView === "standings" && (
-          <>
-            <TournamentTabs activeId={activeTab} onSelect={handleTabSelect} />
-
-            {config.id === "season" ? (
-              <SeasonLeaderboard leagueId={leagueData.league.id} />
-            ) : (
-              <DraftAwareTournament
+        {activeView === "standings" &&
+          (config.id === "season" ? (
+            <div className="min-h-screen bg-surface">
+              {/* Keep the major navigator on screen — the Season button glows
+                  gold while active; the arrows/dots jump back to any major. */}
+              <EventHeader
                 config={config}
-                leagueId={leagueData.league.id}
-                isMember={!!myMember}
-                onDraftNow={() => handleViewSelect("team")}
+                seasonActive
+                onSelectMajor={handleTabSelect}
+                onSeasonStandings={() => handleTabSelect("season")}
               />
-            )}
-          </>
-        )}
+              <SeasonLeaderboard leagueId={leagueData.league.id} hideHero />
+            </div>
+          ) : (
+            <DraftAwareTournament
+              config={config}
+              leagueId={leagueData.league.id}
+              isMember={!!myMember}
+              onDraftNow={() => handleViewSelect("team")}
+              onSelectMajor={handleTabSelect}
+              onSeasonStandings={() => handleTabSelect("season")}
+            />
+          ))}
 
         {activeView === "team" && (
           <MyTeam

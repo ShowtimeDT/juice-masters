@@ -4,14 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { TournamentId, TOURNAMENTS } from "@/lib/tournaments";
 import { fetchTournamentData } from "@/lib/espn";
 import { Entry, TournamentData } from "@/lib/types";
-import { SeasonStanding } from "@/lib/season";
+import { SeasonStanding, SeasonMember, buildSeasonStandings } from "@/lib/season";
 import { calculateStandings } from "@/lib/scoring";
 
-interface LeagueMember {
+interface LeagueMember extends SeasonMember {
   user_id: string;
-  display_name: string;
-  team_name: string | null;
-  team_photo: string | null;
 }
 
 export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
@@ -37,6 +34,9 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
 
       // For each tournament, try to get locked draft entries + ESPN data
       const tournamentStandings = new Map<TournamentId, Map<string, number>>();
+      // Worst (highest = most over par) counting score among each major's teams —
+      // the basis for the missed-major penalty (worst + 5).
+      const worstByTournament = new Map<TournamentId, number>();
       let birdies = 0;
 
       for (const t of tournamentConfigs) {
@@ -60,53 +60,17 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
             scoreMap.set(s.entry.owner, s.countingScore);
           }
           tournamentStandings.set(t.id as TournamentId, scoreMap);
+          worstByTournament.set(
+            t.id as TournamentId,
+            Math.max(...standings.map((s) => s.countingScore))
+          );
         } catch {
           // Skip this tournament
         }
       }
 
-      // Build season standings from ALL league members
-      const seasonStandings: SeasonStanding[] = members.map((member) => {
-        const tournamentResults = tournamentConfigs.map((t) => {
-          const scoreMap = tournamentStandings.get(t.id as TournamentId);
-          const score = scoreMap?.get(member.display_name) ?? null;
-          return {
-            tournamentId: t.id as TournamentId,
-            shortName: t.shortName,
-            countingScore: score,
-            rank: null,
-          };
-        });
-
-        const totalScore = tournamentResults.reduce((sum, r) => sum + (r.countingScore ?? 0), 0);
-        const completedTournaments = tournamentResults.filter((r) => r.countingScore !== null).length;
-
-        return {
-          owner: member.display_name,
-          teamName: member.team_name || member.display_name,
-          teamPhoto: member.team_photo ?? null,
-          tournamentResults,
-          totalScore,
-          completedTournaments,
-          rank: 0,
-        };
-      });
-
-      // Sort by total score ascending
-      seasonStandings.sort((a, b) => a.totalScore - b.totalScore);
-
-      // Assign ranks
-      let currentRank = 1;
-      for (let i = 0; i < seasonStandings.length; i++) {
-        if (i > 0 && seasonStandings[i].totalScore === seasonStandings[i - 1].totalScore) {
-          seasonStandings[i].rank = seasonStandings[i - 1].rank;
-        } else {
-          seasonStandings[i].rank = currentRank;
-        }
-        currentRank = i + 2;
-      }
-
-      setStandings(seasonStandings);
+      // Build season standings from ALL league members (pure logic in lib/season.ts)
+      setStandings(buildSeasonStandings(members, tournamentStandings, worstByTournament));
       setTotalBirdies(birdies);
       setLastUpdated(new Date());
       setError(null);
