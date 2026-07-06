@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import TopBrandBar from "@/components/profile/TopBrandBar";
@@ -24,10 +24,22 @@ const monthOf = (dates: string) => dates.slice(0, 3);
 export default function ProfilePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [handle, setHandle] = useState("");
 
   useEffect(() => {
     document.title = "Profile · Juice Tour";
   }, []);
+
+  // The username lives only in the database (not the session), so load it once.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => {
+        if (me?.username) setHandle(me.username);
+      })
+      .catch(() => {});
+  }, [status]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login?callbackUrl=/profile");
@@ -43,11 +55,6 @@ export default function ProfilePage() {
 
   const name = session?.user?.name ?? "Your profile";
   const mono = session?.user?.name ? initials(session.user.name) : "?";
-
-  // TODO(backend): there's no account-level `username` in the session/JWT and no
-  // /api/me endpoint to read it. Show the display name; leave the handle blank
-  // rather than inventing one. Account Settings notes the same gap.
-  const handle = "";
 
   return (
     <div className="min-h-screen bg-surface">

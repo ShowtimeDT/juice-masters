@@ -20,15 +20,12 @@ function initials(name: string): string {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
 
-  // Display-name field is editable in the UI, but there is no account-level
-  // endpoint to persist it (the only name endpoint, /api/leagues/team-name, is
-  // league-scoped — a team name, not the account display name). Keep local state
-  // so the field works, but don't pretend it saves.
-  // TODO(backend): no PATCH /api/me (or equivalent) to persist display name / username.
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     document.title = "Account settings · Juice Tour";
@@ -41,6 +38,43 @@ export default function SettingsPage() {
   useEffect(() => {
     if (session?.user?.name) setDisplayName(session.user.name);
   }, [session?.user?.name]);
+
+  // The username lives only in the database (not the session), so load it once.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((me) => {
+        if (me?.username) setUsername(me.username);
+      })
+      .catch(() => {});
+  }, [status]);
+
+  async function saveProfile() {
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      const res = await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: displayName, username }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSaveMessage({ ok: false, text: data.error ?? "Failed to save changes" });
+        return;
+      }
+      if (data.username) setUsername(data.username);
+      // Pull the new display name into the session JWT so the whole app
+      // (top bar, monogram) reflects it without a re-login.
+      await updateSession();
+      setSaveMessage({ ok: true, text: "Profile saved" });
+    } catch {
+      setSaveMessage({ ok: false, text: "Failed to save changes" });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (status === "loading" || status === "unauthenticated") {
     return (
@@ -118,7 +152,8 @@ export default function SettingsPage() {
             />
           </Field>
           <div className="mt-2 text-xs text-faint">
-            Your handle is how leaguemates see you in chat and standings.
+            Your handle is how leaguemates see you in chat and standings. 3–30 letters,
+            numbers, or underscores.
           </div>
 
           <div className="mt-[18px]">
@@ -140,17 +175,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="mt-[18px] flex gap-3">
-            {/* TODO(backend): no account-profile update endpoint, so "Save changes"
-                can't persist display name / username yet. Disabled to avoid implying
-                it saves; wire to a real PATCH /api/me when it exists. */}
+          <div className="mt-[18px] flex items-center gap-3">
             <button
               type="button"
-              disabled
-              title="Saving profile changes isn't available yet"
-              className="inline-flex h-12 items-center justify-center rounded-[11px] px-[22px] text-sm font-semibold text-[#1A1408] btn-gold disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={saving || displayName.trim().length === 0}
+              onClick={saveProfile}
+              className="inline-flex h-12 cursor-pointer items-center justify-center rounded-[11px] px-[22px] text-sm font-semibold text-[#1A1408] btn-gold disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Save changes
+              {saving ? "Saving…" : "Save changes"}
             </button>
             <a
               href="/profile"
@@ -158,6 +190,11 @@ export default function SettingsPage() {
             >
               Cancel
             </a>
+            {saveMessage && (
+              <span className={`text-[13px] ${saveMessage.ok ? "text-under" : "text-rose"}`}>
+                {saveMessage.text}
+              </span>
+            )}
           </div>
         </div>
 
