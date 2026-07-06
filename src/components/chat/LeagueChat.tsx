@@ -90,7 +90,9 @@ export default function LeagueChat({ leagueId, isMember }: LeagueChatProps) {
 
   useEffect(() => {
     if (!isMember) return;
-    load();
+    (async () => {
+      await load();
+    })();
     const interval = setInterval(load, POLL_MS);
     return () => clearInterval(interval);
   }, [load, isMember]);

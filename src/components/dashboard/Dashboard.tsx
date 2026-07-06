@@ -125,10 +125,9 @@ export default function Dashboard() {
   // Live scores for the focus major (live phase = the live board; off = last major's final).
   const { data: espnData } = useAutoRefresh(focusId);
 
-  // Default the live-phase league picker to the first league.
-  useEffect(() => {
-    if (!selectedLeagueId && leagues.length) setSelectedLeagueId(leagues[0].id);
-  }, [leagues, selectedLeagueId]);
+  // The live-phase league picker defaults to the first league; state only
+  // tracks an explicit pick, so the default is derived rather than stored.
+  const effectiveLeagueId = selectedLeagueId ?? leagues[0]?.id ?? null;
 
   // Standings per league for the focus major (live/off) — one ESPN dataset, one
   // entries fetch per league, scored by the existing engine.
@@ -210,7 +209,7 @@ export default function Dashboard() {
     [leagues, standingsByLeague, myName]
   );
 
-  const selected = leagueViews.find((v) => v.league.id === selectedLeagueId) ?? leagueViews[0] ?? null;
+  const selected = leagueViews.find((v) => v.league.id === effectiveLeagueId) ?? leagueViews[0] ?? null;
 
   if (!session?.user) {
     return (
@@ -248,7 +247,7 @@ export default function Dashboard() {
           <LiveView
             leagueViews={leagueViews}
             selected={selected}
-            selectedLeagueId={selectedLeagueId}
+            selectedLeagueId={effectiveLeagueId}
             onSelectLeague={setSelectedLeagueId}
             myName={myName}
             majorName={(getLiveMajor() ?? focusMajor).shortName}

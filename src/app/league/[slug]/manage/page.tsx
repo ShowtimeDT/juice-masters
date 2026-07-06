@@ -81,6 +81,8 @@ export default function ManageLeaguePage() {
   const [fetching, setFetching] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const userId = session?.user?.id;
+
   const fetchData = useCallback(async () => {
     try {
       const leagueRes = await fetch(`/api/leagues/${slug}`);
@@ -88,7 +90,7 @@ export default function ManageLeaguePage() {
       const ld = await leagueRes.json();
       setLeagueData(ld);
 
-      if (session?.user?.id !== ld.league.commissioner_id) {
+      if (userId !== ld.league.commissioner_id) {
         setError("Only the commissioner can manage this league");
         setLoading(false);
         return;
@@ -103,11 +105,16 @@ export default function ManageLeaguePage() {
       setError("Failed to load league");
     }
     setLoading(false);
-  }, [slug, session?.user?.id]);
+  }, [slug, userId]);
 
   useEffect(() => {
-    if (authStatus === "authenticated") fetchData();
-    else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
+    if (authStatus === "authenticated") {
+      (async () => {
+        await fetchData();
+      })();
+    } else if (authStatus === "unauthenticated") {
+      router.replace(`/login?callbackUrl=/league/${slug}/manage`);
+    }
   }, [authStatus, fetchData, router, slug]);
 
   const unlinkMember = async (member: LeagueMember) => {

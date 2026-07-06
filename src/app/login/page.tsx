@@ -16,13 +16,14 @@ function safeCallbackUrl(raw: string | null): string {
 export default function LoginPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [callbackUrl, setCallbackUrl] = useState("/");
-
-  // (window.location avoids the useSearchParams Suspense requirement.)
-  useEffect(() => {
+  // Read once on the first client render — never rendered into the DOM, so
+  // there's no hydration concern. (window.location avoids the useSearchParams
+  // Suspense requirement.)
+  const [callbackUrl] = useState(() => {
+    if (typeof window === "undefined") return "/";
     const params = new URLSearchParams(window.location.search);
-    setCallbackUrl(safeCallbackUrl(params.get("callbackUrl")));
-  }, []);
+    return safeCallbackUrl(params.get("callbackUrl"));
+  });
 
   useEffect(() => {
     if (status === "authenticated") {

@@ -63,6 +63,8 @@ export default function JoinLeaguePage() {
   const [error, setError] = useState("");
   const [showAuth, setShowAuth] = useState(false);
 
+  const myId = session?.user?.id;
+
   // Load the league's unclaimed member slots so a returning player can
   // claim their name (and their past results) instead of joining as new.
   const loadMembers = useCallback(async () => {
@@ -79,7 +81,6 @@ export default function JoinLeaguePage() {
       // Already in this league on the signed-in account? Skip the whole
       // join/claim flow and go straight to their team — returning should be
       // seamless. (Leave `unclaimed` null so the loader stays during nav.)
-      const myId = session?.user?.id;
       if (myId && all.some((m) => m.user_id === myId)) {
         router.replace(`/league/${slug}`);
         return;
@@ -90,11 +91,13 @@ export default function JoinLeaguePage() {
     } catch {
       setUnclaimed([]);
     }
-  }, [slug, code, session?.user?.id, router]);
+  }, [slug, code, myId, router]);
 
   useEffect(() => {
     if (status === "authenticated" && unclaimed === null) {
-      loadMembers();
+      (async () => {
+        await loadMembers();
+      })();
     }
   }, [status, unclaimed, loadMembers]);
 

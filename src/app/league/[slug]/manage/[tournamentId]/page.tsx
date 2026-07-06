@@ -77,6 +77,8 @@ export default function TournamentSettingsPage() {
   const [golfersPerTier, setGolfersPerTier] = useState(10);
   const [countingScores, setCountingScores] = useState(5);
 
+  const userId = session?.user?.id;
+
   const fetchData = useCallback(async () => {
     try {
       const leagueRes = await fetch(`/api/leagues/${slug}`);
@@ -84,7 +86,7 @@ export default function TournamentSettingsPage() {
       const ld = await leagueRes.json();
       setLeagueData(ld);
 
-      if (session?.user?.id !== ld.league.commissioner_id) {
+      if (userId !== ld.league.commissioner_id) {
         setError("Only the commissioner can manage this league");
         setLoading(false);
         return;
@@ -113,10 +115,13 @@ export default function TournamentSettingsPage() {
           }
 
           // Set close time — default to 15 min before first tee
+          // (config is derived from tournamentId, so look it up locally to
+          // keep this callback's dependencies to plain primitives)
+          const firstTeeTime = tournamentConfigs.find((t) => t.id === tournamentId)?.firstTeeTime;
           if (d.close_time) {
             setCloseTimeLocal(isoToLocalInput(d.close_time as string));
-          } else if (config?.firstTeeTime) {
-            setCloseTimeLocal(getDefaultCloseTime(config.firstTeeTime));
+          } else if (firstTeeTime) {
+            setCloseTimeLocal(getDefaultCloseTime(firstTeeTime));
           }
         }
       }
@@ -124,11 +129,16 @@ export default function TournamentSettingsPage() {
       setError("Failed to load data");
     }
     setLoading(false);
-  }, [slug, session?.user?.id, tournamentId, config?.firstTeeTime]);
+  }, [slug, userId, tournamentId]);
 
   useEffect(() => {
-    if (authStatus === "authenticated") fetchData();
-    else if (authStatus === "unauthenticated") router.replace(`/login?callbackUrl=/league/${slug}/manage`);
+    if (authStatus === "authenticated") {
+      (async () => {
+        await fetchData();
+      })();
+    } else if (authStatus === "unauthenticated") {
+      router.replace(`/login?callbackUrl=/league/${slug}/manage`);
+    }
   }, [authStatus, fetchData, router, slug]);
 
   const saveAll = async () => {

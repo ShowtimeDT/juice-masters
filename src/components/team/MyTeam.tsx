@@ -52,16 +52,15 @@ export default function MyTeam({
   openDraftTournamentId,
   onPicksChanged,
 }: MyTeamProps) {
-  const [major, setMajor] = useState<TournamentId>(openDraftTournamentId ?? defaultMyTeamMajor());
+  // The major the user explicitly navigated to (arrows), if any. The shown
+  // major is derived: the open-draft major arrives async after mount, so we
+  // land on it once known — unless the user has picked one themselves.
+  const [chosenMajor, setMajor] = useState<TournamentId | null>(null);
+  const major: TournamentId = chosenMajor ?? openDraftTournamentId ?? defaultMyTeamMajor();
   const [golfers, setGolfers] = useState<TeamGolfer[] | null>(null);
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
   const [liveDraft, setLiveDraft] = useState<DraftData | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // The open-draft major arrives async after mount — land on it once known.
-  useEffect(() => {
-    if (openDraftTournamentId) setMajor(openDraftTournamentId);
-  }, [openDraftTournamentId]);
 
   const loadTeam = useCallback(async () => {
     if (!myMember) {
@@ -115,7 +114,9 @@ export default function MyTeam({
   }, [leagueId, major, myMember]);
 
   useEffect(() => {
-    loadTeam();
+    (async () => {
+      await loadTeam();
+    })();
   }, [loadTeam]);
 
   const config = getTournament(major);

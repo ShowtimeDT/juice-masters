@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { DraftData } from "@/lib/draft/types";
 import { TournamentConfig } from "@/lib/tournaments";
@@ -81,19 +81,31 @@ export default function DraftPickView({
     (m) => m.user_id === session?.user?.id || m.name === currentUserName
   );
 
-  // Load existing picks for current user
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setSelections({});
-      setTiebreaker("");
-      setSubmitted(false);
-      return;
-    }
+  // Load existing picks for current user. This resets the form whenever the
+  // saved picks or the signed-in user change — done by adjusting state during
+  // render (https://react.dev/learn/you-might-not-need-an-effect) rather than
+  // in an effect, so the form never paints with stale picks.
+  const userId = session?.user?.id;
+  const [prevPicksKey, setPrevPicksKey] = useState<{
+    isLoggedIn: boolean;
+    picks: typeof picks;
+    userId: string | undefined;
+    currentUserName: string;
+  } | null>(null);
+
+  if (
+    prevPicksKey === null ||
+    prevPicksKey.isLoggedIn !== isLoggedIn ||
+    prevPicksKey.picks !== picks ||
+    prevPicksKey.userId !== userId ||
+    prevPicksKey.currentUserName !== currentUserName
+  ) {
+    setPrevPicksKey({ isLoggedIn, picks, userId, currentUserName });
 
     // Find picks belonging to current user (by user_id or owner name)
-    const myPicks = picks.filter(
-      (p) => p.user_id === session?.user?.id || p.owner === currentUserName
-    );
+    const myPicks = isLoggedIn
+      ? picks.filter((p) => p.user_id === userId || p.owner === currentUserName)
+      : [];
 
     if (myPicks.length > 0) {
       const sel: Record<number, string> = {};
@@ -109,7 +121,7 @@ export default function DraftPickView({
       setTiebreaker("");
       setSubmitted(false);
     }
-  }, [isLoggedIn, picks, session?.user?.id, currentUserName]);
+  }
 
   const handleSelect = (tierNumber: number, golferName: string) => {
     setSelections((prev) => ({

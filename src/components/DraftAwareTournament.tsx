@@ -67,7 +67,9 @@ export default function DraftAwareTournament({
   }, [config.id, leagueId]);
 
   useEffect(() => {
-    fetchDraft();
+    (async () => {
+      await fetchDraft();
+    })();
   }, [fetchDraft]);
 
   const header = (subStatus?: string) => (

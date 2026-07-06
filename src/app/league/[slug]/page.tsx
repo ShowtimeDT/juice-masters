@@ -100,7 +100,9 @@ function LeagueContent() {
   }, [session?.user]);
 
   useEffect(() => {
-    fetchLeague();
+    (async () => {
+      await fetchLeague();
+    })();
   }, [fetchLeague]);
 
   // Is a draft live in this league, and has this member picked yet?
@@ -141,7 +143,9 @@ function LeagueContent() {
   }, [myDisplayName, leagueDbId]);
 
   useEffect(() => {
-    fetchOpenDraft();
+    (async () => {
+      await fetchOpenDraft();
+    })();
   }, [fetchOpenDraft]);
 
   const handleTabSelect = (id: TournamentId) => {

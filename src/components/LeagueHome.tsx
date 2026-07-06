@@ -35,7 +35,12 @@ export default function LeagueHome() {
   const router = useRouter();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  // Landing-page CTAs route here after sign-in with ?create=1, which opens
+  // the create panel right away. (window.location avoids the useSearchParams
+  // Suspense requirement; it's client-only, so guard for the server render.)
+  const [showCreate, setShowCreate] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("create") === "1"
+  );
   const [newLeagueName, setNewLeagueName] = useState("");
   const [creating, setCreating] = useState(false);
   const [joinCode, setJoinCode] = useState("");
@@ -48,11 +53,10 @@ export default function LeagueHome() {
   const [createError, setCreateError] = useState("");
   const joinInputRef = useRef<HTMLInputElement>(null);
 
-  // Landing-page CTAs route here after sign-in with ?create=1 / ?join=1.
-  // (window.location avoids the useSearchParams Suspense requirement.)
+  // Landing-page CTAs route here after sign-in with ?join=1 — focus the
+  // invite-code input once it's on screen (it only renders after loading).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("create") === "1") setShowCreate(true);
     if (params.get("join") === "1") joinInputRef.current?.focus();
   }, [loading]);
 
@@ -89,7 +93,9 @@ export default function LeagueHome() {
   };
 
   useEffect(() => {
-    fetchLeagues();
+    (async () => {
+      await fetchLeagues();
+    })();
   }, []);
 
   const createLeague = async () => {
