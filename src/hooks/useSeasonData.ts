@@ -4,14 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { TournamentId, TOURNAMENTS } from "@/lib/tournaments";
 import { fetchTournamentData } from "@/lib/espn";
 import { Entry, TournamentData } from "@/lib/types";
-import { SeasonStanding, MISSED_MAJOR_PENALTY } from "@/lib/season";
+import { SeasonStanding, SeasonMember, buildSeasonStandings } from "@/lib/season";
 import { calculateStandings } from "@/lib/scoring";
 
-interface LeagueMember {
+interface LeagueMember extends SeasonMember {
   user_id: string;
-  display_name: string;
-  team_name: string | null;
-  team_photo: string | null;
 }
 
 export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
@@ -72,71 +69,8 @@ export function useSeasonData(leagueId?: string, intervalMs = 120_000) {
         }
       }
 
-      // Build season standings from ALL league members
-      const seasonStandings: SeasonStanding[] = members.map((member) => {
-        const tournamentResults = tournamentConfigs.map((t) => {
-          const scoreMap = tournamentStandings.get(t.id as TournamentId);
-          // No standings yet → that major hasn't been played; show nothing.
-          if (!scoreMap) {
-            return {
-              tournamentId: t.id as TournamentId,
-              shortName: t.shortName,
-              countingScore: null,
-              rank: null,
-              isPenalty: false,
-            };
-          }
-          const own = scoreMap.get(member.display_name);
-          if (own != null) {
-            return {
-              tournamentId: t.id as TournamentId,
-              shortName: t.shortName,
-              countingScore: own,
-              rank: null,
-              isPenalty: false,
-            };
-          }
-          // Major was played but this member never drafted a team → penalty:
-          // the worst team's score for that major, plus 5.
-          const worst = worstByTournament.get(t.id as TournamentId) ?? 0;
-          return {
-            tournamentId: t.id as TournamentId,
-            shortName: t.shortName,
-            countingScore: worst + MISSED_MAJOR_PENALTY,
-            rank: null,
-            isPenalty: true,
-          };
-        });
-
-        const totalScore = tournamentResults.reduce((sum, r) => sum + (r.countingScore ?? 0), 0);
-        const completedTournaments = tournamentResults.filter((r) => r.countingScore !== null).length;
-
-        return {
-          owner: member.display_name,
-          teamName: member.team_name || member.display_name,
-          teamPhoto: member.team_photo ?? null,
-          tournamentResults,
-          totalScore,
-          completedTournaments,
-          rank: 0,
-        };
-      });
-
-      // Sort by total score ascending
-      seasonStandings.sort((a, b) => a.totalScore - b.totalScore);
-
-      // Assign ranks
-      let currentRank = 1;
-      for (let i = 0; i < seasonStandings.length; i++) {
-        if (i > 0 && seasonStandings[i].totalScore === seasonStandings[i - 1].totalScore) {
-          seasonStandings[i].rank = seasonStandings[i - 1].rank;
-        } else {
-          seasonStandings[i].rank = currentRank;
-        }
-        currentRank = i + 2;
-      }
-
-      setStandings(seasonStandings);
+      // Build season standings from ALL league members (pure logic in lib/season.ts)
+      setStandings(buildSeasonStandings(members, tournamentStandings, worstByTournament));
       setTotalBirdies(birdies);
       setLastUpdated(new Date());
       setError(null);

@@ -1,7 +1,4 @@
 import { TournamentId, TOURNAMENTS } from "./tournaments";
-import { getEntriesForTournament } from "./entries";
-import { calculateStandings } from "./scoring";
-import { EntryStanding, TournamentData } from "./types";
 
 export interface SeasonTournamentResult {
   tournamentId: TournamentId;
@@ -25,75 +22,79 @@ export interface SeasonStanding {
   rank: number;
 }
 
-export function calculateSeasonStandings(
-  tournamentDataMap: Map<TournamentId, TournamentData>
+export interface SeasonMember {
+  display_name: string;
+  team_name: string | null;
+  team_photo: string | null;
+}
+
+/**
+ * Season standings for a league, pure and testable — the data fetching lives
+ * in useSeasonData, which feeds this per-major score maps.
+ *
+ * - `tournamentScores`: for each played major, owner display name → counting score.
+ *   Majors absent from the map haven't been played and show as blank.
+ * - `worstByTournament`: the worst (highest) counting score per played major —
+ *   a member who skipped that major is charged that score + MISSED_MAJOR_PENALTY.
+ */
+export function buildSeasonStandings(
+  members: SeasonMember[],
+  tournamentScores: Map<TournamentId, Map<string, number>>,
+  worstByTournament: Map<TournamentId, number>
 ): SeasonStanding[] {
-  // Calculate standings for each tournament that has entries and data
-  const standingsMap = new Map<TournamentId, EntryStanding[]>();
+  const tournamentConfigs = TOURNAMENTS.filter((t) => t.id !== "season");
 
-  for (const tournament of TOURNAMENTS) {
-    if (tournament.id === "season") continue;
-    const entries = getEntriesForTournament(tournament.id);
-    const data = tournamentDataMap.get(tournament.id);
-    if (entries.length > 0 && data) {
-      standingsMap.set(tournament.id, calculateStandings(entries, data));
-    }
-  }
-
-  // Collect all unique owners across all tournaments
-  const ownerSet = new Set<string>();
-  for (const [, standings] of standingsMap) {
-    for (const s of standings) {
-      ownerSet.add(s.entry.owner);
-    }
-  }
-
-  // Build season standings per owner
-  const seasonStandings: SeasonStanding[] = [];
-
-  for (const owner of ownerSet) {
-    const tournamentResults: SeasonTournamentResult[] = [];
-    let totalScore = 0;
-    let completedTournaments = 0;
-
-    for (const tournament of TOURNAMENTS) {
-      if (tournament.id === "season") continue;
-
-      const standings = standingsMap.get(tournament.id);
-      const standing = standings?.find((s) => s.entry.owner === owner);
-
-      if (standing) {
-        tournamentResults.push({
-          tournamentId: tournament.id,
-          shortName: tournament.shortName,
-          countingScore: standing.countingScore,
-          rank: standing.rank,
-        });
-        totalScore += standing.countingScore;
-        completedTournaments++;
-      } else {
-        tournamentResults.push({
-          tournamentId: tournament.id,
-          shortName: tournament.shortName,
+  const seasonStandings: SeasonStanding[] = members.map((member) => {
+    const tournamentResults: SeasonTournamentResult[] = tournamentConfigs.map((t) => {
+      const scoreMap = tournamentScores.get(t.id);
+      // No standings yet → that major hasn't been played; show nothing.
+      if (!scoreMap) {
+        return {
+          tournamentId: t.id,
+          shortName: t.shortName,
           countingScore: null,
           rank: null,
-        });
+          isPenalty: false,
+        };
       }
-    }
+      const own = scoreMap.get(member.display_name);
+      if (own != null) {
+        return {
+          tournamentId: t.id,
+          shortName: t.shortName,
+          countingScore: own,
+          rank: null,
+          isPenalty: false,
+        };
+      }
+      // Major was played but this member never drafted a team → penalty:
+      // the worst team's score for that major, plus 5.
+      const worst = worstByTournament.get(t.id) ?? 0;
+      return {
+        tournamentId: t.id,
+        shortName: t.shortName,
+        countingScore: worst + MISSED_MAJOR_PENALTY,
+        rank: null,
+        isPenalty: true,
+      };
+    });
 
-    seasonStandings.push({
-      owner,
+    const totalScore = tournamentResults.reduce((sum, r) => sum + (r.countingScore ?? 0), 0);
+    const completedTournaments = tournamentResults.filter((r) => r.countingScore !== null).length;
+
+    return {
+      owner: member.display_name,
+      teamName: member.team_name || member.display_name,
+      teamPhoto: member.team_photo ?? null,
       tournamentResults,
       totalScore,
       completedTournaments,
       rank: 0,
-    });
-  }
+    };
+  });
 
-  // Sort by total score ascending (lower is better)
+  // Sort by total score ascending (lower is better), then assign ranks with ties.
   seasonStandings.sort((a, b) => a.totalScore - b.totalScore);
-
-  // Assign ranks with tie handling
   let currentRank = 1;
   for (let i = 0; i < seasonStandings.length; i++) {
     if (i > 0 && seasonStandings[i].totalScore === seasonStandings[i - 1].totalScore) {
