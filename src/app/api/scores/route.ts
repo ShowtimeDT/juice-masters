@@ -57,9 +57,13 @@ export async function GET(req: Request) {
     }
     const espnUrl = `${ESPN_URL}?dates=${tournament.espnDatesParam}`;
 
-    const res = await fetch(espnUrl, {
-      next: { revalidate: 60 },
-    });
+    // The scoreboard JSON grows past ~1.5MB once a round of hole-by-hole
+    // scores exists. Next's fetch cache rejects entries over 2MB (the body is
+    // stored base64-inflated) and silently keeps serving the last stored
+    // snapshot — which froze live scoring during The Open 2026. Bypass the
+    // data cache here; the CDN Cache-Control header on the response below is
+    // what keeps ESPN traffic to ~1 request per minute.
+    const res = await fetch(espnUrl, { cache: "no-store" });
 
     if (!res.ok) {
       return NextResponse.json(
